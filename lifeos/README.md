@@ -4,7 +4,7 @@ Panel personal para organizar el día: agenda, finanzas, salud y hábitos en una
 
 ## Funciones
 
-- **Agenda avanzada**: pestañas Hoy / Mañana / Todas, selector de calendario, orden cronológico automático (las tareas sin hora van al final), edición en línea y prioridades.
+- **Agenda avanzada**: pestañas Hoy / Mañana / Todas, selector de calendario, orden cronológico automático (las tareas sin hora van al final), edición en línea y prioridades. Las tareas pendientes de días anteriores siguen en "Hoy" marcadas como atrasadas.
 - **Entrada rápida**: una sola barra que entiende tareas, gastos y agua.
   - `Dentista mañana 16:00` → tarea para mañana a las 16:00
   - `Junta 4:30 pm`, `Entrega pasado mañana 9:00`
@@ -25,20 +25,32 @@ npm run build    # versión de producción en dist/
 
 ## Sincronización con Supabase (opcional)
 
+Sin configurar nada, la app guarda todo en el navegador. Para respaldar y sincronizar entre dispositivos:
+
 1. Copia `.env.example` a `.env.local` y llena `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
-2. Crea la tabla:
+2. En el editor SQL de Supabase, crea la tabla con seguridad por usuario:
 
 ```sql
 create table lifeos_data (
-  id text primary key,
+  id uuid primary key references auth.users (id) on delete cascade,
   payload jsonb not null
 );
+
+alter table lifeos_data enable row level security;
+
+create policy "Cada usuario solo ve y modifica su fila"
+  on lifeos_data for all
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
 ```
 
-Limitaciones actuales de la sincronización:
+3. Abre la app, pulsa **Entrar** junto al logo y crea tu cuenta con correo y contraseña.
 
-- Solo **sube** datos; no los descarga en otro dispositivo. Sirve como respaldo, no como sincronización entre equipos.
-- La clave anónima viaja en el código del navegador. Sin autenticación ni políticas RLS, cualquiera que tenga la clave puede leer y sobrescribir la fila. No la uses con datos sensibles hasta agregar Supabase Auth y RLS por usuario.
+Cómo funciona:
+
+- Cada persona inicia sesión y solo puede leer y escribir su propia fila. La clave anónima por sí sola no da acceso a los datos de nadie.
+- Al entrar, al volver a la pestaña y al recuperar la conexión, la app descarga los datos de la nube si son más recientes que los locales; cada cambio local se sube un segundo después.
+- Si dos dispositivos editan a la vez, gana el cambio más reciente completo (no se mezclan cambios tarea por tarea).
 
 ## Estructura
 
@@ -48,4 +60,5 @@ src/
   lib/dates.js       fechas, normalización de hora y orden cronológico
   lib/quickAdd.js    intérprete de la entrada rápida
   lib/storage.js     datos iniciales, validación y localStorage
+  lib/cloud.js       inicio de sesión y sincronización con Supabase
 ```

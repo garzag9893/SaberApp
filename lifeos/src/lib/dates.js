@@ -25,7 +25,8 @@ export const getShortDayName = (dateStr) =>
 
 export const formatReadableDate = (dateStr) => {
   if (!dateStr) return '';
-  return fromKey(dateStr).toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+  const text = fromKey(dateStr).toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+  return text.charAt(0).toUpperCase() + text.slice(1);
 };
 
 // Normaliza "4pm", "4:30 pm", "9:00" a "16:00", "16:30", "09:00".

@@ -11,19 +11,13 @@ import {
 } from './lib/dates.js';
 import { parseQuickAdd } from './lib/quickAdd.js';
 import {
+  CLOUD_ENABLED, loadSession, saveSession, signIn, signUp, signOut,
+  freshSession, pullPayload, pushPayload, isAuthError
+} from './lib/cloud.js';
+import {
   STORAGE_KEYS, defaultTasks, defaultTransactions, defaultHealth,
   sanitizeTasks, sanitizeTransactions, sanitizeHealth, loadStored, saveStored
 } from './lib/storage.js';
-
-// ============================================================================
-// CONFIGURACIÓN DE NUBE (SUPABASE) — se lee de .env.local (ver .env.example)
-// ============================================================================
-const SUPABASE_CONFIG = {
-  url: (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/+$/, ''),
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-  userId: import.meta.env.VITE_SUPABASE_USER_ID || 'usuario_principal'
-};
-const CLOUD_ENABLED = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
 
 const MAX_WATER = 15;
 const newId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -62,6 +56,7 @@ const CLOUD_BADGE = {
   synced: { label: 'Nube', title: 'Sincronizado en la nube', Icon: Cloud, cls: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' },
   syncing: { label: 'Subiendo', title: 'Sincronizando con la nube…', Icon: Cloud, cls: 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' },
   error: { label: 'Error', title: 'No se pudo sincronizar; los datos siguen guardados localmente', Icon: CloudOff, cls: 'bg-rose-500/10 border-rose-500/30 text-rose-400' },
+  signedout: { label: 'Entrar', title: 'Inicia sesión para sincronizar con la nube', Icon: CloudOff, cls: 'bg-amber-500/10 border-amber-500/30 text-amber-300' },
   local: { label: 'Local', title: 'Guardado localmente', Icon: CloudOff, cls: 'bg-slate-800 border-slate-700 text-slate-400' }
 };
 
@@ -69,7 +64,13 @@ export default function LifeOSApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [quickInput, setQuickInput] = useState('');
   const [notification, setNotification] = useState(null);
-  const [cloudStatus, setCloudStatus] = useState(CLOUD_ENABLED ? 'syncing' : 'local');
+  const [session, setSession] = useState(() => (CLOUD_ENABLED ? loadSession() : null));
+  const [cloudStatus, setCloudStatus] = useState(!CLOUD_ENABLED ? 'local' : session ? 'syncing' : 'signedout');
+  const [cloudReady, setCloudReady] = useState(false); // true cuando ya se comparó con la nube
+  const [pullNonce, setPullNonce] = useState(0);
+  const [showLogin, setShowLogin] = useState(false);
+  const [authForm, setAuthForm] = useState({ email: '', password: '' });
+  const [authBusy, setAuthBusy] = useState(false);
   const fileInputRef = useRef(null);
   const toastTimerRef = useRef(null);
 
@@ -96,6 +97,18 @@ export default function LifeOSApp() {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editTaskForm, setEditTaskForm] = useState({ title: '', date: '', time: '', priority: 'medium' });
 
+  // --- CONTROL DE VERSIONES PARA LA NUBE (gana el cambio más reciente) ---
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+  const [initialSnapshot] = useState(() => JSON.stringify({ tasks, transactions, health }));
+  const snapshotRef = useRef(initialSnapshot);
+  const updatedAtRef = useRef(null);
+  if (updatedAtRef.current === null) {
+    try { updatedAtRef.current = localStorage.getItem(STORAGE_KEYS.updatedAt) || ''; } catch { updatedAtRef.current = ''; }
+  }
+  const lastSyncedRef = useRef(null);   // marca de tiempo de lo último que coincide con la nube
+  const skipBumpRef = useRef(false);    // el cambio automático de día no cuenta como edición
+
   const showToast = useCallback((msg) => {
     setNotification(msg);
     clearTimeout(toastTimerRef.current);
@@ -113,6 +126,7 @@ export default function LifeOSApp() {
     const checkDateRollover = () => {
       const expected = getTodayKey(simOffset);
       if (health.lastActiveDate === expected) return;
+      skipBumpRef.current = true;
       setHealth(prev => rollDay(prev, expected));
       setNewTaskDate(expected);
       setCustomAgendaDate(expected);
@@ -140,39 +154,162 @@ export default function LifeOSApp() {
     setHealth(prev => ({ ...prev, simOffset: 0 }));
   };
 
-  // --- SINCRONIZACIÓN LOCAL Y NUBE ---
+  // --- SESIÓN DE NUBE ---
+  const updateSession = useCallback((next) => {
+    saveSession(next);
+    setSession(next);
+    if (!next) {
+      setCloudReady(false);
+      lastSyncedRef.current = null;
+      setCloudStatus(CLOUD_ENABLED ? 'signedout' : 'local');
+    }
+  }, []);
+
+  // Devuelve una sesión con token vigente, renovándolo si hace falta.
+  const getSession = useCallback(async (signal) => {
+    const current = sessionRef.current;
+    if (!current) return null;
+    const fresh = await freshSession(current, signal);
+    if (fresh !== current) {
+      sessionRef.current = fresh;
+      updateSession(fresh);
+    }
+    return fresh;
+  }, [updateSession]);
+
+  const handleCloudError = useCallback((err) => {
+    if (err?.name === 'AbortError') return;
+    if (isAuthError(err)) {
+      updateSession(null);
+      showToast('🔒 Tu sesión venció. Vuelve a entrar para sincronizar.');
+    } else {
+      setCloudStatus('error');
+    }
+  }, [updateSession, showToast]);
+
+  const handleAuth = async (mode) => {
+    const email = authForm.email.trim();
+    if (!email || authForm.password.length < 6) {
+      showToast('⚠️ Escribe tu correo y una contraseña de al menos 6 caracteres');
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      const next = mode === 'signup' ? await signUp(email, authForm.password) : await signIn(email, authForm.password);
+      if (!next) {
+        showToast('📧 Cuenta creada. Confirma tu correo y después inicia sesión.');
+      } else {
+        updateSession(next);
+        setCloudStatus('syncing');
+        setShowLogin(false);
+        setAuthForm({ email: '', password: '' });
+        showToast('☁️ Sesión iniciada. Sincronizando…');
+      }
+    } catch (err) {
+      showToast(`❌ ${err.message || 'No se pudo iniciar sesión'}`);
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    const current = sessionRef.current;
+    updateSession(null);
+    if (current) signOut(current);
+    showToast('👋 Sesión cerrada. Tus datos siguen guardados en este dispositivo.');
+  };
+
+  // --- DESCARGA DESDE LA NUBE: al entrar, al volver a la pestaña y al recuperar conexión ---
+  const userId = session?.userId;
   useEffect(() => {
+    if (!CLOUD_ENABLED || !userId) return;
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        setCloudStatus('syncing');
+        const active = await getSession(controller.signal);
+        if (!active) return;
+        const remote = await pullPayload(active, controller.signal);
+        if (controller.signal.aborted) return;
+
+        const remoteStamp = typeof remote?.updatedAt === 'string' ? remote.updatedAt : '';
+        if (remote && remoteStamp > updatedAtRef.current) {
+          const nextTasks = sanitizeTasks(remote.tasks);
+          const nextTransactions = sanitizeTransactions(remote.transactions);
+          const nextHealth = sanitizeHealth(remote.health);
+          if (nextTasks && nextTransactions && nextHealth) {
+            snapshotRef.current = JSON.stringify({ tasks: nextTasks, transactions: nextTransactions, health: nextHealth });
+            updatedAtRef.current = remoteStamp;
+            lastSyncedRef.current = remoteStamp;
+            try { localStorage.setItem(STORAGE_KEYS.updatedAt, remoteStamp); } catch { /* sin almacenamiento */ }
+            setTasks(nextTasks);
+            setTransactions(nextTransactions);
+            setHealth(nextHealth);
+            setEditingTaskId(null);
+            setNewTaskDate(nextHealth.lastActiveDate);
+            setCustomAgendaDate(nextHealth.lastActiveDate);
+            showToast('☁️ Datos actualizados desde la nube');
+          }
+        } else if (remote && remoteStamp === updatedAtRef.current) {
+          lastSyncedRef.current = remoteStamp;
+        }
+        setCloudReady(true);
+        setCloudStatus('synced');
+      } catch (err) {
+        handleCloudError(err);
+      }
+    })();
+
+    return () => controller.abort();
+  }, [userId, pullNonce, getSession, handleCloudError, showToast]);
+
+  useEffect(() => {
+    if (!CLOUD_ENABLED) return;
+    const retry = () => {
+      if (document.visibilityState === 'visible') setPullNonce(n => n + 1);
+    };
+    document.addEventListener('visibilitychange', retry);
+    window.addEventListener('online', retry);
+    return () => {
+      document.removeEventListener('visibilitychange', retry);
+      window.removeEventListener('online', retry);
+    };
+  }, []);
+
+  // --- GUARDADO LOCAL Y SUBIDA A LA NUBE ---
+  useEffect(() => {
+    const snapshot = JSON.stringify({ tasks, transactions, health });
+    if (snapshot !== snapshotRef.current) {
+      snapshotRef.current = snapshot;
+      if (skipBumpRef.current) skipBumpRef.current = false;
+      else updatedAtRef.current = new Date().toISOString();
+    }
+
     const saved = [
       saveStored(STORAGE_KEYS.tasks, tasks),
       saveStored(STORAGE_KEYS.transactions, transactions),
       saveStored(STORAGE_KEYS.health, health)
     ].every(Boolean);
+    try { localStorage.setItem(STORAGE_KEYS.updatedAt, updatedAtRef.current); } catch { /* sin almacenamiento */ }
     if (!saved) showToast('⚠️ No se pudo guardar en este navegador (almacenamiento lleno o bloqueado)');
 
-    if (!CLOUD_ENABLED) return;
+    // No se sube nada hasta haber comparado con la nube, para no pisar datos más recientes.
+    if (!CLOUD_ENABLED || !userId || !cloudReady) return;
+    if (lastSyncedRef.current === updatedAtRef.current) return;
 
     setCloudStatus('syncing');
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       try {
-        const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/lifeos_data`, {
-          method: 'POST',
-          signal: controller.signal,
-          headers: {
-            'apikey': SUPABASE_CONFIG.anonKey,
-            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates,return=minimal'
-          },
-          body: JSON.stringify({
-            id: SUPABASE_CONFIG.userId,
-            payload: { tasks, transactions, health, updatedAt: new Date().toISOString() }
-          })
-        });
-        // fetch no lanza error con 401/404/500: hay que revisar el estado.
-        setCloudStatus(res.ok ? 'synced' : 'error');
+        const active = await getSession(controller.signal);
+        if (!active) return;
+        const stamp = updatedAtRef.current;
+        await pushPayload(active, { tasks, transactions, health, updatedAt: stamp }, controller.signal);
+        lastSyncedRef.current = stamp;
+        setCloudStatus('synced');
       } catch (err) {
-        if (err.name !== 'AbortError') setCloudStatus('error');
+        handleCloudError(err);
       }
     }, 1000);
 
@@ -180,7 +317,7 @@ export default function LifeOSApp() {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [tasks, transactions, health, showToast]);
+  }, [tasks, transactions, health, userId, cloudReady, getSession, handleCloudError, showToast]);
 
   // --- EXPORTAR E IMPORTAR RESPALDOS ---
   const downloadBlob = (blob, filename) => {
@@ -344,15 +481,25 @@ export default function LifeOSApp() {
     agendaFilterMode === 'tomorrow' ? tomorrowKey :
     agendaFilterMode === 'custom' ? customAgendaDate : null;
 
+  // Las tareas pendientes de días anteriores siguen apareciendo en "Hoy" hasta completarse o moverse.
+  const isOverdue = (t) => !t.completed && Boolean(t.date) && t.date < todayKey;
+  const isForToday = (t) => (t.date || todayKey) === todayKey || isOverdue(t);
+
   const filteredAndSortedTasks = sortTasksChronologically(
-    tasks.filter(t => agendaFilterMode === 'all' || (t.date || todayKey) === selectedAgendaDate),
+    tasks.filter(t =>
+      agendaFilterMode === 'all' ||
+      (agendaFilterMode === 'today' ? isForToday(t) : (t.date || todayKey) === selectedAgendaDate)
+    ),
     todayKey
   );
 
-  const todayTasksSorted = sortTasksChronologically(
-    tasks.filter(t => (t.date || todayKey) === todayKey),
-    todayKey
-  );
+  const todayTasksSorted = sortTasksChronologically(tasks.filter(isForToday), todayKey);
+  const overdueCount = tasks.filter(isOverdue).length;
+
+  const moveTaskToToday = (id) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, date: todayKey } : t));
+    showToast('📅 Tarea movida a hoy');
+  };
 
   const handleManualTx = (e) => {
     e.preventDefault();
@@ -439,7 +586,8 @@ export default function LifeOSApp() {
     if (health.sleepHours < 6.5) return "Dormiste menos de 6.5h. Prioriza tus 2 tareas más importantes y evita compras impulsivas hoy.";
     if (balance < 1000) return "Tu balance disponible está ajustado. Mantén tus gastos variables al mínimo esta semana.";
     if (completedHabits >= 3) return "¡Excelente racha de hábitos hoy! Tu nivel de energía es óptimo para avanzar en tus metas.";
-    return `Hoy es ${formatReadableDate(health.lastActiveDate)}. Tienes ${todayTasksSorted.length - completedTodayTasks} tareas pendientes hoy.`;
+    const pending = todayTasksSorted.length - completedTodayTasks;
+    return `Hoy es ${formatReadableDate(health.lastActiveDate)}. Tienes ${pending} ${pending === 1 ? 'tarea pendiente' : 'tareas pendientes'} hoy${overdueCount ? ` (${overdueCount} ${overdueCount === 1 ? 'atrasada' : 'atrasadas'})` : ''}.`;
   };
 
   const cloudBadge = CLOUD_BADGE[cloudStatus] || CLOUD_BADGE.local;
@@ -470,18 +618,75 @@ export default function LifeOSApp() {
               </div>
               <div>
                 <h1 className="font-bold text-lg tracking-tight">LifeOS</h1>
-                <p className="text-xs text-indigo-400 font-medium capitalize">{formatReadableDate(health.lastActiveDate)}</p>
+                <p className="text-xs text-indigo-400 font-medium">{formatReadableDate(health.lastActiveDate)}</p>
               </div>
             </div>
 
-            <div
-              title={cloudBadge.title}
-              className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border ${cloudBadge.cls}`}
-            >
-              <CloudIcon className="w-3 h-3" />
-              <span>{cloudBadge.label}</span>
-            </div>
+            {cloudStatus === 'signedout' || cloudStatus === 'error' ? (
+              <button
+                type="button"
+                title={cloudBadge.title}
+                onClick={() => (cloudStatus === 'error' ? setPullNonce(n => n + 1) : setShowLogin(v => !v))}
+                aria-expanded={cloudStatus === 'signedout' ? showLogin : undefined}
+                className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border ${cloudBadge.cls}`}
+              >
+                <CloudIcon className="w-3 h-3" />
+                <span>{cloudStatus === 'error' ? 'Reintentar' : cloudBadge.label}</span>
+              </button>
+            ) : (
+              <div
+                title={cloudBadge.title}
+                className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border ${cloudBadge.cls}`}
+              >
+                <CloudIcon className="w-3 h-3" />
+                <span>{cloudBadge.label}</span>
+              </div>
+            )}
           </div>
+
+          {CLOUD_ENABLED && !session && showLogin && (
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleAuth('signin'); }}
+              className="mb-4 p-3 rounded-xl bg-slate-800/60 border border-slate-700 space-y-2"
+            >
+              <p className="text-[11px] text-slate-400">Entra para respaldar y sincronizar tus datos entre dispositivos.</p>
+              <input
+                type="email"
+                autoComplete="email"
+                placeholder="Correo"
+                aria-label="Correo"
+                value={authForm.email}
+                onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-indigo-500"
+              />
+              <input
+                type="password"
+                autoComplete="current-password"
+                placeholder="Contraseña"
+                aria-label="Contraseña"
+                value={authForm.password}
+                onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-indigo-500"
+              />
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="submit"
+                  disabled={authBusy}
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold py-1.5 rounded-lg"
+                >
+                  Entrar
+                </button>
+                <button
+                  type="button"
+                  disabled={authBusy}
+                  onClick={() => handleAuth('signup')}
+                  className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-200 text-xs py-1.5 rounded-lg"
+                >
+                  Crear cuenta
+                </button>
+              </div>
+            </form>
+          )}
 
           <nav className="flex md:flex-col gap-1 overflow-x-auto">
             {[
@@ -552,6 +757,15 @@ export default function LifeOSApp() {
             <Upload className="w-3.5 h-3.5" /> Restaurar Respaldo
           </button>
           <input type="file" accept=".json,application/json" ref={fileInputRef} onChange={handleImportJSON} className="hidden" />
+
+          {session && (
+            <div className="flex items-center justify-between gap-2 px-1 pt-1 text-[11px] text-slate-500">
+              <span className="truncate" title={session.email}>{session.email}</span>
+              <button onClick={handleSignOut} className="shrink-0 text-slate-400 hover:text-slate-200 underline">
+                Cerrar sesión
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -654,9 +868,15 @@ export default function LifeOSApp() {
                           {task.completed ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> : <Circle className="w-4 h-4 text-slate-500 shrink-0" />}
                           <span className={`text-sm break-words min-w-0 ${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>{task.title}</span>
                         </div>
-                        <span className="text-xs text-slate-400 bg-slate-900 px-2 py-1 rounded-md shrink-0">
-                          {task.time || 'Sin hora'}
-                        </span>
+                        {isOverdue(task) ? (
+                          <span className="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 px-2 py-1 rounded-md shrink-0">
+                            Atrasada
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400 bg-slate-900 px-2 py-1 rounded-md shrink-0">
+                            {task.time || 'Sin hora'}
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -912,7 +1132,7 @@ export default function LifeOSApp() {
                           />
                         </div>
                       </div>
-                      <span className={`text-xs mt-2 font-medium capitalize ${d.isToday ? 'text-indigo-400 font-bold' : 'text-slate-400'}`}>
+                      <span className={`text-xs mt-2 font-medium ${d.isToday ? 'text-indigo-400 font-bold' : 'text-slate-400'}`}>
                         {d.day}
                       </span>
                     </div>
@@ -925,7 +1145,7 @@ export default function LifeOSApp() {
               <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-6">
                 <div className="flex justify-between items-center">
                   <h3 className="font-semibold text-base">Registro de Hoy</h3>
-                  <span className="text-xs text-slate-400 capitalize">{formatReadableDate(health.lastActiveDate)}</span>
+                  <span className="text-xs text-slate-400">{formatReadableDate(health.lastActiveDate)}</span>
                 </div>
 
                 <div>
@@ -1023,7 +1243,7 @@ export default function LifeOSApp() {
                   {health.dailyLogs.map((log) => (
                     <div key={log.date} className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col justify-between gap-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-semibold text-slate-200 capitalize">{formatReadableDate(log.date)}</span>
+                        <span className="text-sm font-semibold text-slate-200">{formatReadableDate(log.date)}</span>
                         <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                           {log.habitsDone}/{log.habitsTotal} hábitos
                         </span>
@@ -1236,8 +1456,12 @@ export default function LifeOSApp() {
                               <span className="text-xs text-indigo-400 font-medium flex items-center gap-1">
                                 <Clock className="w-3 h-3" /> {task.time && task.time !== 'Sin hora' ? task.time : 'Sin hora'}
                               </span>
-                              {agendaFilterMode === 'all' && (
-                                <span className="text-[11px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded-md capitalize">
+                              {isOverdue(task) ? (
+                                <span className="text-[11px] text-rose-300 bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 rounded-md">
+                                  Atrasada · {formatReadableDate(task.date)}
+                                </span>
+                              ) : agendaFilterMode === 'all' && (
+                                <span className="text-[11px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded-md">
                                   {formatReadableDate(task.date || todayKey)}
                                 </span>
                               )}
@@ -1249,6 +1473,15 @@ export default function LifeOSApp() {
                         </button>
 
                         <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                          {isOverdue(task) && (
+                            <button
+                              onClick={() => moveTaskToToday(task.id)}
+                              className="text-[11px] font-semibold text-indigo-300 hover:text-indigo-200 px-2 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/30"
+                              aria-label={`Mover a hoy: ${task.title}`}
+                            >
+                              Mover a hoy
+                            </button>
+                          )}
                           <button
                             onClick={() => startEditingTask(task)}
                             className="text-slate-400 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors"
