@@ -35,10 +35,24 @@ LifeOS junta en un solo lugar la agenda, el dinero, la salud y los hábitos de u
 - Idioma y formato: español de México (textos, fechas, moneda en pesos).
 - Debe ser ligera y rápida en teléfonos sencillos.
 
+### Modelo de ingresos (decidido: mixto)
+
+Se activa **después de publicar la app y tener usuarios reales**, no antes.
+
+- **Gratis con anuncios limitados**: toda la funcionalidad está disponible gratis. Los anuncios cumplen estas condiciones:
+  - Son **sin personalizar**: sin cookies de rastreo ni perfilado.
+  - Aparecen en **pocos lugares fijos**, por ejemplo al final del Resumen; **nunca** mientras alguien anota, en la bienvenida, en formularios ni en avisos.
+  - No reciben ningún dato de la app (tareas, montos, hábitos, nombre).
+  - Sin conexión no se muestran ni dejan huecos.
+- **Plan Plus de pago**: quita los anuncios y suma funciones de valor (por ejemplo sincronización cifrada entre dispositivos, respaldo automático y reportes). Precio y funciones exactas por decidir.
+- **Requisitos antes de mostrar anuncios**: dominio propio, aprobación de la red de anuncios, aviso de privacidad conforme a la LFPDPPP y aviso de cookies cuando aplique.
+- Los anuncios no pueden romper el contraste, la navegación con teclado ni la velocidad en celulares; se cargan después del contenido.
+
 ### Decisiones abiertas
 
-- **Modelo para ganar dinero**: quieres que algún día genere ingresos, pero aún no está decidido cómo. No debe contradecir "Mis datos son míos".
 - **Cómo destacar frente a otras apps** (además de las automatizaciones): hay propuestas en discusión; ninguna está confirmada.
+- **Plan Plus**: precio, funciones incluidas y forma de pago (por ejemplo Mercado Pago o Stripe).
+- **Red de anuncios**: cuál usar (por ejemplo Google AdSense en modo sin personalizar, o un patrocinador directo).
 
 ## Brand Commitments
 
@@ -55,7 +69,7 @@ LifeOS junta en un solo lugar la agenda, el dinero, la salud y los hábitos de u
 
 1. **Un vistazo basta**: lo importante del día se entiende sin navegar.
 2. **Anotar no cuesta**: capturar algo nunca debe tomar más de unos segundos.
-3. **Los datos son de la persona**: funciona sin cuenta ni conexión; nada se envía sin que la persona lo active.
+3. **Los datos son de la persona**: funciona sin cuenta ni conexión; sus datos nunca se envían sin que lo active y **nunca se usan para anuncios**.
 4. **Para todos los teléfonos**: rápida y usable en equipos sencillos.
 5. **Accesible por defecto**: nadie queda fuera por su vista, su forma de navegar o su equipo.
 

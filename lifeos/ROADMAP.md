@@ -65,7 +65,21 @@ Basado en `DESIGN.md`.
 | 3.2.3 | **Revisión de código en cada PR** | La skill `/code-review` comenta los PR antes de aceptarlos | Encuentra errores antes de publicar |
 | 3.2.4 | **Presupuesto de rendimiento** | Lighthouse en CI con mínimos de rendimiento y accesibilidad en celular | Que la app siga rápida en celulares de gama baja |
 
-## 4. Funciones pendientes (cuando se necesiten)
+## 4. Ingresos: modelo mixto (después de publicar)
+
+Decidido en `PRODUCT.md`: gratis con anuncios limitados y sin personalizar, más un plan Plus que los quita. Va en este orden porque cada paso desbloquea el siguiente:
+
+| # | Paso | Depende de | Tamaño |
+|---|---|---|---|
+| 4.1 | Publicar la app (bloque 1) y conseguir los primeros usuarios | Repositorio `lifeos` | S |
+| 4.2 | Dominio propio (por ejemplo `lifeos.mx`) apuntando a la app | Tú: comprarlo | S |
+| 4.3 | Aviso de privacidad (LFPDPPP) y página de términos, en la app y en el sitio | 4.2 | S |
+| 4.4 | Espacio de anuncio en la app: un solo lugar al final del Resumen, se carga después del contenido, desaparece sin conexión, nunca en formularios ni en la bienvenida. Con pruebas de contraste, teclado y velocidad | 4.2 | M |
+| 4.5 | Alta en la red de anuncios (por ejemplo AdSense, sin personalizar) y conexión del espacio | 4.3, 4.4 · Tú: crear la cuenta | S |
+| 4.6 | Plan Plus: definir precio y funciones, cobro (Mercado Pago o Stripe) y verificación del pago en el servidor | Usuarios reales · Tú: cuenta de cobro | L |
+| 4.7 | Medir: ingresos por anuncios frente a Plus, sin rastrear a las personas (conteos agregados) | 4.5, 4.6 | S |
+
+## 5. Funciones pendientes (cuando se necesiten)
 
 - Sincronizar Salud elemento por elemento (hoy gana el bloque completo más reciente).
 - Notificaciones push con la app cerrada (requiere un servidor de push).
