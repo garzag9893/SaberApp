@@ -103,9 +103,45 @@ Basado en `lifeos/DESIGN.md`. Puede avanzar mientras esperas a revisar etapas de
 | 3.2 | Pantalla de bienvenida para usuarios nuevos | Figma + frontend-design | M |
 | 3.3 | Ilustraciones para bienvenida y estados vacíos | Higgsfield | S |
 | 3.4 | Kit de marca y capturas para compartir | Canva | S |
-| 3.5 | Pruebas de regresión visual automáticas | Playwright en CI | S |
+| 3.5 | ✅ Pruebas de regresión visual automáticas, flujos completos y contraste de colores | Playwright y Vitest en CI | S |
 
-## 4. LifeOS — funciones pendientes (cuando se necesiten)
+## 4. Automatizaciones
+
+### 4.1 Listas en LifeOS (se activan solas al moverlo a su repositorio)
+
+| Automatización | Cuándo corre | Qué evita |
+|---|---|---|
+| **86 pruebas de lógica** (Vitest) | Cada cambio | Errores en fechas, entrada rápida, finanzas, repetición, sincronización |
+| **Contraste de colores** (lee `index.css`) | Cada cambio | Que un cambio de color deje texto ilegible en tema claro u oscuro. Ya encontró 2 problemas reales en el tema claro |
+| **13 flujos en el navegador** | Cada cambio | Que se rompa agendar, borrar y deshacer, renombrar categorías, la migración de datos… |
+| **Accesibilidad básica** | Cada cambio | Botones o campos sin nombre para lectores de pantalla |
+| **21 capturas de regresión visual** (escritorio oscuro y claro, celular) | Cada cambio | Cambios visuales no intencionales. Si falla, el reporte trae imagen esperada, actual y diferencia |
+| **Publicación en GitHub Pages** | Cada cambio en `main` | Publicar una versión con pruebas fallando: solo publica si todo pasa |
+| **Dependabot** | Semanal | Dependencias desactualizadas; abre un PR que pasa por todas las pruebas |
+
+### 4.2 Propuestas (necesitan tu visto bueno, porque actúan solas fuera de una sesión)
+
+| # | Automatización | Cómo | Valor |
+|---|---|---|---|
+| 4.2.1 | **Informe semanal de avance** | Tarea programada cada viernes que use tu skill "Informe de trabajo elaborado esta semana" con los cambios de la semana | Reporte sin tener que pedirlo |
+| 4.2.2 | **Vigilar PRs** | Claude sigue cada PR: si una prueba falla en CI, revisa el reporte y propone el arreglo | Menos tiempo depurando |
+| 4.2.3 | **Revisión de código en cada PR** | La skill `/code-review` comenta los PR antes de aceptarlos | Encuentra errores antes de publicar |
+| 4.2.4 | **Presupuesto de rendimiento** | Lighthouse en CI con mínimos de rendimiento y accesibilidad en celular | Clave para el Portal Dental: el desenfoque de Liquid Glass es costoso en celulares |
+
+### 4.3 Para el Portal Dental (se arman en la auditoría, etapa 2.1)
+
+La regla del brief es "no eliminar ni romper lo que funciona". La forma de probarlo es **tomar la foto antes de tocar nada**:
+
+1. **Capturas de referencia del portal actual** por rol (paciente, recepción, dentista, administración), en escritorio y celular. Cada etapa visual se compara contra ellas, y cualquier cambio no planeado aparece en el reporte.
+2. **Pruebas de flujo por rol** con usuarios de prueba: iniciar sesión, reservar cita, confirmar, cancelar, buscar paciente.
+3. **Pruebas de permisos**: el dentista no ve pacientes que no le corresponden; el paciente solo ve sus citas; nada clínico aparece en componentes compartidos.
+4. **Disponibilidad idéntica**: el mismo horario aparece libre u ocupado en la página pública y en recepción.
+5. **Contraste y accesibilidad** del nuevo sistema de diseño (la misma prueba de contraste de LifeOS), sobre todo en superficies de vidrio.
+6. **Presupuesto de rendimiento** en celular (4.2.4).
+
+Todas corren contra una base de datos de pruebas, nunca contra la de producción.
+
+## 5. LifeOS — funciones pendientes (cuando se necesiten)
 
 - Sincronizar Salud elemento por elemento (hoy gana el bloque completo más reciente).
 - Notificaciones push con la app cerrada (requiere un servidor de push).

@@ -1,0 +1,151 @@
+import { test, expect, openApp, nav } from './fixtures.js';
+
+// Flujos completos en el navegador, con fecha fija (sábado 14 de noviembre de 2026, 10:30).
+
+const quickAdd = async (page, text) => {
+  await page.getByLabel('Entrada rápida').fill(text);
+  await page.getByLabel('Entrada rápida').press('Enter');
+  return page.getByRole('status');
+};
+
+test.describe('entrada rápida', () => {
+  test('agenda una tarea con fecha relativa y repetición', async ({ page }) => {
+    await openApp(page);
+    await expect(await quickAdd(page, 'Gym cada lunes 7am')).toContainText('Lun 16 de nov a las 07:00 · se repite: semanal');
+    await nav(page, 'Agenda').click();
+    await page.getByRole('button', { name: 'Semana', exact: true }).click();
+    await page.getByRole('button', { name: 'Semana siguiente' }).click();
+    await expect(page.locator('main').getByText('Gym')).toBeVisible();
+  });
+
+  test('registra un gasto en la categoría propia', async ({ page }) => {
+    await openApp(page);
+    await expect(await quickAdd(page, 'Uber al aeropuerto $350')).toContainText('$350 (Transporte)');
+    await nav(page, 'Finanzas').click();
+    await expect(page.getByText('Uber al aeropuerto')).toBeVisible();
+  });
+
+  test('suma vasos de agua', async ({ page }) => {
+    await openApp(page);
+    await quickAdd(page, '2 vasos de agua');
+    await expect(page.getByRole('status')).toContainText('+2 vasos de agua');
+    const water = () => page.evaluate(() => JSON.parse(localStorage.getItem('lifeos_data_v6')).health.water);
+    await expect.poll(water).toBe(5); // 3 que ya había + 2
+  });
+});
+
+test.describe('agenda', () => {
+  test('completar una tarea que se repite crea la siguiente y desmarcarla la quita', async ({ page }) => {
+    await openApp(page);
+    await nav(page, 'Agenda').click();
+    const gym = page.locator('main').getByRole('button', { name: /Entrenamiento de fuerza/ }).first();
+    await gym.click();
+    await page.getByRole('button', { name: 'Todas', exact: true }).click();
+    await expect(page.getByText('Entrenamiento de fuerza', { exact: true })).toHaveCount(2);
+    await page.locator('main button[aria-pressed="true"]', { hasText: 'Entrenamiento de fuerza' }).click();
+    await expect(page.getByText('Entrenamiento de fuerza', { exact: true })).toHaveCount(1);
+  });
+
+  test('marca los choques de horario y las tareas atrasadas', async ({ page }) => {
+    await openApp(page);
+    await nav(page, 'Agenda').click();
+    await expect(page.getByText('Choca con Dentista')).toBeVisible();
+    await expect(page.getByText(/Atrasada · Jue 12 de nov/)).toBeVisible();
+    await page.getByRole('button', { name: 'Mover a hoy: Pagar tarjeta de crédito' }).click();
+    await expect(page.getByText(/Atrasada ·/)).toHaveCount(0);
+  });
+
+  test('no acepta una hora de fin antes del inicio', async ({ page }) => {
+    await openApp(page);
+    await nav(page, 'Agenda').click();
+    await page.getByPlaceholder('¿Qué necesitas hacer?').first().fill('Clase');
+    await page.getByLabel('Inicio').fill('18:00');
+    await page.getByLabel('Fin (opcional)').fill('17:00');
+    await page.getByRole('button', { name: 'Crear tarea' }).click();
+    await expect(page.getByRole('status')).toContainText('La hora de fin debe ser después de la de inicio');
+  });
+
+  test('borrar y deshacer', async ({ page }) => {
+    await openApp(page);
+    await nav(page, 'Agenda').click();
+    await page.getByRole('button', { name: 'Eliminar tarea: Dentista' }).click();
+    await expect(page.getByRole('button', { name: 'Eliminar tarea: Dentista' })).toHaveCount(0);
+    await page.getByRole('status').getByRole('button', { name: 'Deshacer' }).click();
+    await expect(page.getByRole('button', { name: 'Eliminar tarea: Dentista' })).toHaveCount(1);
+  });
+});
+
+test.describe('finanzas', () => {
+  test('la tendencia cambia el periodo al tocar un mes', async ({ page }) => {
+    await openApp(page);
+    await nav(page, 'Finanzas').click();
+    await page.locator('svg[aria-label^="Ingresos y gastos"] rect').nth(1).click();
+    await expect(page.locator('main h2 + p')).toHaveText('Julio 2026');
+  });
+
+  test('avisa del presupuesto excedido', async ({ page }) => {
+    await openApp(page);
+    await nav(page, 'Finanzas').click();
+    await expect(page.getByText(/Excedido por \$/)).toBeVisible();
+  });
+
+  test('renombrar una categoría actualiza movimientos y presupuestos', async ({ page }) => {
+    await openApp(page);
+    await nav(page, 'Ajustes').click();
+    const input = page.getByLabel('Nombre de la categoría Ocio');
+    await input.fill('Diversión');
+    await input.press('Enter');
+    await nav(page, 'Finanzas').click();
+    await expect(page.getByText(/Diversión • /).first()).toBeVisible();
+    await expect(page.getByText('Diversión', { exact: true }).first()).toBeVisible();
+  });
+});
+
+test.describe('datos', () => {
+  test('el tema y los cambios se conservan al recargar', async ({ page }) => {
+    await openApp(page);
+    await nav(page, 'Ajustes').click();
+    await page.getByRole('button', { name: 'Claro' }).click();
+    await quickAdd(page, 'Tarea que debe persistir');
+    await page.reload();
+    await expect(page.locator('html')).toHaveClass(/light/);
+    await nav(page, 'Agenda').click();
+    await expect(page.getByText('Tarea que debe persistir')).toBeVisible();
+  });
+
+  test.describe('sin datos guardados', () => {
+    test.use({ seed: false });
+
+    test('migra los datos de la versión 5', async ({ page }) => {
+      await page.addInitScript(() => {
+        if (localStorage.getItem('lifeos_data_v6')) return;
+        localStorage.setItem('lifeos_tasks_v5', JSON.stringify([{ id: 'v5', title: 'Tarea de la versión 5', date: '2026-11-14', time: '09:00' }]));
+        localStorage.setItem('lifeos_budgets_v5', JSON.stringify({ Ocio: 999 }));
+      });
+      await openApp(page);
+      await nav(page, 'Agenda').click();
+      await expect(page.getByText('Tarea de la versión 5')).toBeVisible();
+      expect(await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos_data_v6')).budgets)).toEqual({ Ocio: 999 });
+    });
+  });
+});
+
+test('accesibilidad: botones y campos tienen nombre en todas las pantallas', async ({ page }) => {
+  await openApp(page);
+  const problems = [];
+  for (const tab of ['Hoy (Resumen)', 'Finanzas', 'Salud y Hábitos', 'Agenda', 'Ajustes']) {
+    await nav(page, tab).click();
+    const found = await page.evaluate(() => {
+      const name = (el) => (el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent || '').trim()
+        || (el.id && document.querySelector(`label[for="${el.id}"]`)?.textContent.trim())
+        || el.closest('label')?.textContent.trim()
+        || el.getAttribute('placeholder');
+      return [...document.querySelectorAll('button, input:not([type=hidden]):not(.hidden), select, [role=button]')]
+        .filter((el) => el.offsetParent !== null || el.closest('svg'))
+        .filter((el) => !name(el))
+        .map((el) => el.outerHTML.slice(0, 120));
+    });
+    problems.push(...found.map((html) => `${tab}: ${html}`));
+  }
+  expect(problems).toEqual([]);
+});

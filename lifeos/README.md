@@ -50,6 +50,20 @@ npm test         # pruebas de la lógica (entrada rápida, fechas, finanzas, há
 npm run build    # versión de producción en dist/
 ```
 
+## Pruebas
+
+```bash
+npm test                    # lógica y contraste de colores (Vitest, ~1 s)
+npm run test:e2e            # navegador: flujos y regresión visual (Playwright)
+npm run test:visual:update  # aceptar un cambio visual intencional (regenera las capturas)
+npm run test:all            # todo, como en CI
+```
+
+- Las pruebas de navegador usan **fecha y datos fijos** (sábado 14 de noviembre de 2026, 10:30; `e2e/fixtures.js`), así las capturas son idénticas en cada ejecución.
+- Las capturas de referencia están en `e2e/__screenshots__/` para escritorio oscuro, escritorio claro y celular. Se permite un máximo de 150 píxeles distintos por captura; un cambio de un color de acento ya supera ese límite.
+- Si una prueba visual falla en CI, descarga el artefacto **reporte-playwright**: trae la imagen esperada, la actual y la diferencia.
+- `src/lib/tokens.test.js` lee los colores de `src/index.css` y comprueba el contraste WCAG de cada combinación de texto y fondo en ambos temas.
+
 ## Sincronización con Supabase (opcional)
 
 Sin configurar nada, la app guarda todo en el navegador. Para respaldar y sincronizar entre dispositivos:

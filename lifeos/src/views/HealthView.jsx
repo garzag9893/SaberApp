@@ -241,9 +241,9 @@ export default function HealthView({ health, updateHealth, showToast }) {
                   <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{log.habitsDone}/{log.habitsTotal} hábitos</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/80">
-                  <span>💧 {log.water}/{log.waterGoal} vasos</span>
-                  <span>🌙 {log.sleep == null ? '–' : `${log.sleep}h`}</span>
-                  <span>⚡ {log.mood == null ? '–' : `${log.mood}/5`}</span>
+                  <span className="flex items-center gap-1"><Droplets className="w-3.5 h-3.5 text-sky-400" aria-label="Agua" /> <span className="num">{log.water}/{log.waterGoal}</span></span>
+                  <span className="flex items-center gap-1"><Moon className="w-3.5 h-3.5 text-indigo-400" aria-label="Sueño" /> <span className="num">{log.sleep == null ? '–' : `${log.sleep} h`}</span></span>
+                  <span className="flex items-center gap-1"><Activity className="w-3.5 h-3.5 text-amber-400" aria-label="Energía" /> <span className="num">{log.mood == null ? '–' : `${log.mood}/5`}</span></span>
                 </div>
               </div>
             ))}

@@ -1,0 +1,17 @@
+# Revisa cada semana si hay versiones nuevas de dependencias y abre un PR agrupado.
+# El CI corre las pruebas (incluidas las visuales) en ese PR antes de aceptarlo.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      dependencias:
+        patterns: ["*"]
+    open-pull-requests-limit: 3
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

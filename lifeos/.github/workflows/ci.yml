@@ -1,6 +1,5 @@
-# Pruebas y compilación en cada cambio.
-# Nota: GitHub solo ejecuta workflows desde .github/ en la raíz del repositorio,
-# así que este archivo se activa cuando LifeOS vive en su propio repositorio.
+# Pruebas en cada cambio. GitHub solo ejecuta workflows desde .github/ en la raíz del
+# repositorio, así que este archivo se activa cuando LifeOS vive en su propio repositorio.
 name: CI
 
 on:
@@ -8,7 +7,8 @@ on:
   pull_request:
 
 jobs:
-  test:
+  unit:
+    name: Lógica, contraste y compilación
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,3 +19,25 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+  e2e:
+    name: Navegador (flujos y regresión visual)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --trace off
+      # Si algo falla, el reporte incluye las capturas esperada, actual y la diferencia.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: reporte-playwright
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
