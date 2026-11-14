@@ -32,9 +32,11 @@ test('agenda: vista semanal', async ({ page }) => {
   await expect(page.locator('main')).toHaveScreenshot('agenda-semana.png');
 });
 
-test('resumen: detalle al señalar una tarea en el reloj', async ({ page }) => {
+test('resumen: tocar una tarea en el reloj muestra su detalle', async ({ page }) => {
   await openApp(page);
-  await page.getByRole('button', { name: /^Dentista, 13:15/ }).hover();
+  // Tocar (no solo señalar): así funciona también en celular, donde no hay cursor.
+  await page.getByRole('button', { name: /^Dentista, 13:15/ }).click();
+  await expect(page.getByRole('button', { name: 'Marcar como hecha' })).toBeVisible();
   await expect(page.locator('main section').first()).toHaveScreenshot('reloj-detalle.png');
 });
 

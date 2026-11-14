@@ -1,7 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Sparkles } from 'lucide-react';
 
 export default function QuickAddBar({ onSubmit }) {
+  // En pantallas angostas el ejemplo largo se cortaba a media frase.
+  const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 640px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const onChange = () => setNarrow(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
   const [text, setText] = useState('');
   return (
     <form
@@ -18,7 +26,7 @@ export default function QuickAddBar({ onSubmit }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           aria-label="Entrada rápida"
-          placeholder="Entrada rápida: 'Comida $180', 'Dentista mañana 16:00', 'Gym cada lunes 7am'..."
+          placeholder={narrow ? 'Ej.: Dentista mañana 4pm' : "Escribe como hablas: 'Comida $180', 'Dentista mañana 4pm', 'Gym cada lunes 7am'"}
           className="w-full bg-slate-900 border border-slate-700/80 focus:border-indigo-500 rounded-2xl py-3.5 pl-12 pr-28 text-sm text-slate-100 placeholder-slate-500 focus:outline-none shadow-lg"
         />
         <button

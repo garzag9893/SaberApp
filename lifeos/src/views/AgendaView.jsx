@@ -151,7 +151,7 @@ function WeekView({ tasks, todayKey, weekStart, setWeekStart, conflicts, onToggl
                 <Plus className="w-3.5 h-3.5 opacity-60" />
               </button>
               {list.length === 0 ? (
-                <p className="text-[11px] text-slate-600">Libre</p>
+                <p className="text-xs text-slate-500">Libre</p>
               ) : (
                 <div className="space-y-1.5">
                   {list.map((task) => (

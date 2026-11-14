@@ -182,6 +182,12 @@ export default function LifeOSApp() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col md:flex-row">
+      <a
+        href="#contenido"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2.5 focus:rounded-xl focus:bg-indigo-600 focus:text-white focus:text-sm focus:font-semibold"
+      >
+        Saltar al contenido
+      </a>
       <Toast toast={toast} onDismiss={dismissToast} />
 
       <Sidebar
@@ -198,11 +204,25 @@ export default function LifeOSApp() {
         onImportFile={importFile}
       />
 
-      <main className="flex-1 min-w-0 p-4 md:p-8 max-w-6xl mx-auto w-full">
+      <main id="contenido" tabIndex={-1} className="flex-1 min-w-0 p-4 md:p-8 max-w-6xl mx-auto w-full focus:outline-none">
         <QuickAddBar onSubmit={handleQuickAdd} />
 
         {activeTab === 'dashboard' && (
-          <DashboardView data={data} todayKey={todayKey} name={prefs.name} onNavigate={setActiveTab} onToggleTask={store.toggleTask} />
+          <DashboardView
+            data={data}
+            todayKey={todayKey}
+            name={prefs.name}
+            onNavigate={setActiveTab}
+            onToggleTask={store.toggleTask}
+            onMoveToToday={(id) => {
+              store.updateTask(id, { date: todayKey });
+              showToast('📅 Tarea pasada a hoy');
+            }}
+            onAddWater={() => {
+              updateHealth((prev) => ({ ...prev, water: Math.min(prev.water + 1, MAX_WATER) }));
+              showToast('💧 +1 vaso de agua');
+            }}
+          />
         )}
         {activeTab === 'finances' && (
           <FinancesView

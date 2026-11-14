@@ -21,8 +21,8 @@
   --color-slate-200: #dad7e6;
   --color-slate-300: #bcb7cf;
   --color-slate-400: #9c96b3;
-  --color-slate-500: #7c7694;
-  --color-slate-600: #5f5976;
+  --color-slate-500: #8a84a2; /* texto secundario: ≥4.5:1 sobre tarjetas y fondo */
+  --color-slate-600: #6b6584; /* círculos y bordes de controles: ≥3:1 */
   --color-slate-700: #46415a;
   --color-slate-800: #2e2a3d;
   --color-slate-900: #1e1b29;
@@ -131,8 +131,8 @@
   --color-slate-900: #ffffff;
   --color-slate-800: #e9e7f1;
   --color-slate-700: #d6d2e3;
-  --color-slate-600: #a9a3bf;
-  --color-slate-500: #77718f;
+  --color-slate-600: #8e88a6;   /* círculos y bordes de controles: ≥3:1 */
+  --color-slate-500: #6a6482;   /* texto secundario: ≥4.5:1 incluso sobre filas */
   --color-slate-400: #5f5976;
   --color-slate-300: #46415a;
   --color-slate-200: #2e2a3d;
@@ -140,9 +140,9 @@
   --color-slate-50: #14121c;
 
   --color-indigo-950: #f3f1fe;
-  --color-indigo-400: #6a53d6;
-  --color-indigo-300: #5741b4;
-  --color-indigo-200: #45348c;
+  --color-indigo-400: #5741b4;
+  --color-indigo-300: #45348c;
+  --color-indigo-200: #362b6b;
   --color-emerald-400: #156c51;
   --color-emerald-300: #134737;
   --color-rose-400: #d11f48;

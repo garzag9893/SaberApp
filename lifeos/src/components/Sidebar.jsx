@@ -32,7 +32,7 @@ function CloudBadge({ cloud }) {
       <span>{badge.label}</span>
     </>
   );
-  const cls = `flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border ${badge.cls}`;
+  const cls = `flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border ${badge.cls}`;
   if (!clickable) return <div title={badge.title} className={cls}>{content}</div>;
   return (
     <button
@@ -59,7 +59,7 @@ function LoginForm({ cloud }) {
       onSubmit={(e) => { e.preventDefault(); submit('signin'); }}
       className="mb-4 p-3 rounded-xl bg-slate-800/60 border border-slate-700 space-y-2"
     >
-      <p className="text-[11px] text-slate-400">Entra para respaldar y sincronizar tus datos entre dispositivos.</p>
+      <p className="text-xs text-slate-400">Entra para respaldar y sincronizar tus datos entre dispositivos.</p>
       <input type="email" autoComplete="email" placeholder="Correo" aria-label="Correo" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
       <input type="password" autoComplete="current-password" placeholder="Contraseña" aria-label="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
       <div className="grid grid-cols-2 gap-1.5">
@@ -133,12 +133,12 @@ export default function Sidebar({
           <RotateCcw className="w-3.5 h-3.5" /> Simular Nuevo Día
         </button>
         {simOffset > 0 && (
-          <button onClick={onBackToRealDate} className="w-full text-[11px] text-amber-300 hover:text-amber-200 py-1" title="Regresa a la fecha real">
+          <button onClick={onBackToRealDate} className="w-full text-xs text-amber-300 hover:text-amber-200 py-1" title="Regresa a la fecha real">
             Simulación: +{simOffset} {simOffset === 1 ? 'día' : 'días'} · Volver a la fecha real
           </button>
         )}
 
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 px-2 pt-1">Datos y Respaldo</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 px-2 pt-1">Datos y Respaldo</p>
         <div className="grid grid-cols-2 gap-1.5">
           <button onClick={onExportJSON} className={smallBtn}>
             <Download className="w-3.5 h-3.5 text-indigo-400" /> JSON
@@ -166,7 +166,7 @@ export default function Sidebar({
         />
 
         {cloud.session && (
-          <div className="flex items-center justify-between gap-2 px-1 pt-1 text-[11px] text-slate-500">
+          <div className="flex items-center justify-between gap-2 px-1 pt-1 text-xs text-slate-500">
             <span className="truncate" title={cloud.session.email}>{cloud.session.email}</span>
             <button onClick={cloud.logout} className="shrink-0 text-slate-400 hover:text-slate-200 underline">Cerrar sesión</button>
           </div>
