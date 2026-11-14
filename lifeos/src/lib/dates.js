@@ -1,0 +1,58 @@
+// Utilidades de fecha y hora. Las fechas se manejan como claves locales 'YYYY-MM-DD'.
+
+const toKey = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+const fromKey = (dateStr) => {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+
+export const getTodayKey = (offsetDays = 0) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return toKey(d);
+};
+
+export const addDaysToKey = (dateStr, days) => {
+  const date = fromKey(dateStr);
+  date.setDate(date.getDate() + days);
+  return toKey(date);
+};
+
+export const getShortDayName = (dateStr) =>
+  ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][fromKey(dateStr).getDay()];
+
+export const formatReadableDate = (dateStr) => {
+  if (!dateStr) return '';
+  return fromKey(dateStr).toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+};
+
+// Normaliza "4pm", "4:30 pm", "9:00" a "16:00", "16:30", "09:00".
+// Devuelve '' si no es una hora válida, para que la tarea quede "Sin hora".
+export const normalizeTime = (rawTime) => {
+  if (!rawTime || rawTime === 'Sin hora') return '';
+  const match = rawTime.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
+  if (!match) return '';
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2] || '00';
+  const period = match[3]?.toLowerCase();
+
+  if (period && (hours < 1 || hours > 12)) return '';
+  if (period === 'pm' && hours < 12) hours += 12;
+  if (period === 'am' && hours === 12) hours = 0;
+  if (hours > 23 || parseInt(minutes, 10) > 59) return '';
+
+  return `${String(hours).padStart(2, '0')}:${minutes}`;
+};
+
+// Orden cronológico: primero fecha, luego hora (las tareas sin hora van al final).
+export const sortTasksChronologically = (taskList, fallbackDate) =>
+  [...taskList].sort((a, b) => {
+    const dateA = a.date || fallbackDate;
+    const dateB = b.date || fallbackDate;
+    if (dateA !== dateB) return dateA.localeCompare(dateB);
+    const timeA = a.time && a.time !== 'Sin hora' ? a.time : '99:99';
+    const timeB = b.time && b.time !== 'Sin hora' ? b.time : '99:99';
+    return timeA.localeCompare(timeB);
+  });

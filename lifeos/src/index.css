@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Los controles nativos de fecha y hora usan el esquema oscuro. */
+:root {
+  color-scheme: dark;
+}
