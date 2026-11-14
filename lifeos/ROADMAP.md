@@ -37,9 +37,9 @@ Basado en `DESIGN.md`.
 | # | Tarea | Herramienta | Tamaño |
 |---|---|---|---|
 | 2.1 | ✅ Tendencia de ingresos y gastos por mes y calendario de constancia de hábitos | Skill dataviz | M |
-| 2.2 | Pantalla de bienvenida para usuarios nuevos | Figma + frontend-design | M |
-| 2.3 | Ilustraciones para bienvenida y estados vacíos | Higgsfield | S |
-| 2.4 | Kit de marca y capturas para compartir | Canva | S |
+| 2.2 | ✅ Bienvenida de tres pasos (nombre, prueba de la entrada rápida, empezar con ejemplo o desde cero) | frontend-design | M |
+| 2.3 | ✅ Ilustraciones vectoriales con los colores del sistema para la bienvenida y los estados vacíos | Código (SVG) | S |
+| 2.4 | ✅ Kit de marca: imagen para compartir enlaces, capturas en marco de teléfono y hoja de marca (`npm run brand`) | Playwright | S |
 | 2.5 | ✅ Pruebas de regresión visual automáticas, flujos completos y contraste de colores | Playwright y Vitest en CI | S |
 
 ## 3. Automatizaciones

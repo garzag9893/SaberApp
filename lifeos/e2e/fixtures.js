@@ -47,7 +47,8 @@ export function demoData() {
   const dailyLogs = [];
   for (let i = 1; i <= 60; i += 1) {
     if (i % 11 === 0) continue; // algunos días sin registro
-    const done = [1, 2, 3, 4].filter((id) => (i * id) % 3 !== 0 || (i % 5 === 0 && id === 4));
+    // Mezcla realista: días completos (cada 3), parciales y alguno sin ninguno.
+    const done = i % 3 === 0 ? [1, 2, 3, 4] : [1, 2, 3, 4].filter((id) => (i + id) % 4 !== 0 && (i % 7 !== 0 || id === 1));
     dailyLogs.push({
       date: key(-i), water: 4 + (i % 5), waterGoal: 8, sleep: 6 + (i % 4) * 0.5, mood: 2 + (i % 4),
       habitsDone: done.length, habitsTotal: 4, habitsDoneIds: done,

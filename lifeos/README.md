@@ -34,12 +34,21 @@ Panel personal para organizar el día: agenda, finanzas, salud y hábitos en una
 - **Deshacer**: al borrar una tarea, un movimiento o un hábito aparece un botón para recuperarlo.
 - **Instalable**: se puede instalar como app en el celular o la computadora y abrir sin conexión.
 - **Respaldo**: exportar e importar todos los datos en JSON.
+- **Bienvenida**: la primera vez pregunta tu nombre, deja probar la entrada rápida y ofrece empezar con un día de ejemplo o desde cero. Se puede volver a ver desde Ajustes, donde también se pueden borrar todos los datos (con opción de deshacer).
 
 Los datos de la versión 5 se migran automáticamente la primera vez que se abre esta versión.
 
 ## Diseño
 
 La identidad visual, los colores, la tipografía y las reglas de las gráficas están en [DESIGN.md](DESIGN.md), junto con una guía de cómo usar las herramientas de diseño (Figma, Canva, skills de diseño y visualización) en el proyecto.
+
+## Kit de marca
+
+```bash
+npm run brand   # imagen para compartir enlaces, capturas en marco de teléfono y hoja de marca
+```
+
+Detalles en [DESIGN.md](DESIGN.md#kit-de-marca) y [brand/](brand/).
 
 ## Uso
 

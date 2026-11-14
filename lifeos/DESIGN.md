@@ -75,9 +75,34 @@ Estas son las herramientas disponibles en las sesiones de Claude y cómo sirven 
 | **Artifacts** (páginas compartibles) y **skills artifact-design / artifact-diagramming** | Publicar prototipos y explicaciones visuales | Un prototipo navegable para que otras personas den su opinión; una página con este sistema de diseño; un diagrama de cómo se sincronizan los datos. |
 | **Skills pptx / docs** | Documentos | Presentación del proyecto (por ejemplo, para la escuela o un concurso) y un manual de uso. |
 
-### Orden sugerido
+### Qué se hizo con código y qué queda para los conectores
 
-1. **dataviz**: agregar la tendencia mensual de gastos y el calendario de hábitos (es lo que más información nueva da al usuario).
-2. **Figma**: llevar las pantallas al archivo y diseñar ahí la pantalla de bienvenida antes de programarla.
-3. **Higgsfield**: generar las ilustraciones de bienvenida y estados vacíos, con la paleta de este archivo como guía.
-4. **Canva**: kit de marca y capturas para cuando la app esté publicada en GitHub Pages.
+La bienvenida, las ilustraciones y el kit de marca se hicieron directamente en el proyecto, sin Figma, Higgsfield ni Canva:
+
+- **Ilustraciones** (`src/components/Illustrations.jsx`): vectoriales y con los colores del sistema. Cambian solas con el tema, pesan casi nada, funcionan sin conexión y no gastan créditos.
+- **Kit de marca** (`npm run brand`): se genera desde la app real, así que siempre coincide con lo publicado.
+
+Los conectores siguen siendo útiles para lo que el código no cubre:
+
+- **Figma**: iterar ideas de pantallas nuevas antes de programarlas.
+- **Canva**: publicaciones para redes con el kit de `brand/`.
+- **Higgsfield**: un video corto del reloj del día en uso, para presentar la app.
+
+## Bienvenida e ilustraciones
+
+- **Bienvenida** (solo la primera vez, o desde Ajustes): tres pasos. El reloj del día se completa en cada paso: primero la manecilla y una tarea, luego más tareas, dinero y agua, y al final un hábito cumplido. El paso 2 usa el intérprete real de la entrada rápida para mostrar qué entendería, sin guardar nada.
+- **Estados vacíos**: cada pantalla vacía tiene una ilustración y una acción concreta ("Escribe arriba, por ejemplo…", sugerencias de hábitos de un toque).
+- **Estilo de las ilustraciones**: formas redondeadas con una sombra elíptica y un segundo tono como brillo. Volumen suave, solo en ilustraciones; nunca en botones ni tarjetas.
+- **Movimiento**: arcos que se dibujan, objetos que aparecen con un pequeño rebote y una flotación lenta, solo en la bienvenida. Con "reducir movimiento" todo aparece directamente en su estado final.
+
+## Kit de marca
+
+`npm run brand` compila la app, la abre con los datos de ejemplo (sábado 14 de noviembre de 2026, 10:30) y genera:
+
+| Archivo | Uso |
+|---|---|
+| `public/og-image.png` (1200×630) | Vista previa al compartir el enlace. Las etiquetas `og:` de `index.html` usan la dirección pública que define el workflow de GitHub Pages |
+| `brand/capturas/1-resumen.png` … `4-salud.png` (1080×1920) | Historias, publicaciones o tiendas de apps |
+| `brand/hoja-de-marca.png` | Logo, colores con nombre y uso, y tipografía |
+
+Si la app cambia, se vuelve a correr el comando y el kit queda al día.
