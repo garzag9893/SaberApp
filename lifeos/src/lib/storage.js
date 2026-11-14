@@ -44,9 +44,9 @@ export const defaultHealth = () => ({
     { id: 4, name: 'Meditación 10 min', done: false },
   ],
   dailyLogs: [
-    { date: getTodayKey(-3), water: 7, waterGoal: 8, sleep: 6.5, mood: 3, habitsDone: 2, habitsTotal: 4 },
-    { date: getTodayKey(-2), water: 8, waterGoal: 8, sleep: 8.0, mood: 5, habitsDone: 4, habitsTotal: 4 },
     { date: getTodayKey(-1), water: 6, waterGoal: 8, sleep: 7.0, mood: 4, habitsDone: 3, habitsTotal: 4 },
+    { date: getTodayKey(-2), water: 8, waterGoal: 8, sleep: 8.0, mood: 5, habitsDone: 4, habitsTotal: 4 },
+    { date: getTodayKey(-3), water: 7, waterGoal: 8, sleep: 6.5, mood: 3, habitsDone: 2, habitsTotal: 4 },
   ],
 });
 

@@ -1,20 +1,23 @@
 import { plain } from './text.js';
 
+// Paleta de categorías validada para daltonismo (protanopia, deuteranopia y tritanopia)
+// sobre los fondos claro y oscuro de LifeOS. El ORDEN es parte de la validación:
+// colores vecinos siempre se distinguen. Ver DESIGN.md.
+export const PALETTE = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#0ca30c', '#9085e9', '#e66767'];
+
 export const DEFAULT_EXPENSE_CATEGORIES = [
-  { name: 'Alimentación', color: '#10b981' },
-  { name: 'Transporte', color: '#6366f1' },
-  { name: 'Salud', color: '#f43f5e' },
-  { name: 'Ocio', color: '#f59e0b' },
-  { name: 'General', color: '#8b5cf6' },
+  { name: 'Alimentación', color: PALETTE[0] },
+  { name: 'Transporte', color: PALETTE[1] },
+  { name: 'Salud', color: PALETTE[2] },
+  { name: 'Ocio', color: PALETTE[3] },
+  { name: 'General', color: PALETTE[4] },
 ];
 
 export const DEFAULT_INCOME_CATEGORIES = [
-  { name: 'Salario', color: '#22c55e' },
-  { name: 'Freelance', color: '#06b6d4' },
-  { name: 'Otros ingresos', color: '#84cc16' },
+  { name: 'Salario', color: PALETTE[5] },
+  { name: 'Freelance', color: PALETTE[2] },
+  { name: 'Otros ingresos', color: PALETTE[0] },
 ];
-
-export const PALETTE = ['#10b981', '#6366f1', '#f43f5e', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#14b8a6', '#a855f7', '#eab308', '#22c55e', '#64748b'];
 
 export const listKey = (type) => (type === 'income' ? 'incomeCategories' : 'expenseCategories');
 

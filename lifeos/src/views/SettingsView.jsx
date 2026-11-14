@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Palette, Bell, Tags, Moon, Sun, Monitor, Trash2, Plus } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Palette, Bell, Tags, Moon, Sun, Monitor, Trash2, Plus, Database, Download, Upload, FileSpreadsheet, RotateCcw, Smartphone } from 'lucide-react';
 import { addCategory, renameCategory, recolorCategory, removeCategory } from '../lib/categories.js';
 import { notificationsSupported, showSystemNotification } from '../hooks/useReminders.js';
 import { ui, SectionTitle } from '../components/ui.jsx';
@@ -92,7 +92,8 @@ function CategoryList({ title, type, list, categoryOp, showToast }) {
   );
 }
 
-export default function SettingsView({ prefs, setPrefs, settings, categoryOp, showToast }) {
+export default function SettingsView({ prefs, setPrefs, settings, categoryOp, showToast, onExportJSON, onExportCSV, onImportFile, onSimulateDay, install }) {
+  const fileRef = useRef(null);
   const supported = notificationsSupported();
   const [permission, setPermission] = useState(() => (supported ? Notification.permission : 'unsupported'));
 
@@ -193,6 +194,37 @@ export default function SettingsView({ prefs, setPrefs, settings, categoryOp, sh
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <CategoryList title="Gastos" type="expense" list={settings.expenseCategories} categoryOp={categoryOp} showToast={showToast} />
           <CategoryList title="Ingresos" type="income" list={settings.incomeCategories} categoryOp={categoryOp} showToast={showToast} />
+        </div>
+      </div>
+
+      <div className={`${ui.card} p-6 space-y-4`}>
+        <SectionTitle icon={Database} iconClass="text-sky-400" sub="Descarga una copia de todo o restaura una que guardaste.">Datos y respaldo</SectionTitle>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <button onClick={onExportJSON} className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm border border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-800">
+            <Download className="w-4 h-4 text-indigo-400" /> Descargar respaldo
+          </button>
+          <button onClick={onExportCSV} className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm border border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-800">
+            <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> Movimientos en Excel
+          </button>
+          <button onClick={() => fileRef.current?.click()} className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm border border-dashed border-slate-600 text-slate-300 hover:bg-slate-800">
+            <Upload className="w-4 h-4" /> Restaurar respaldo
+          </button>
+          <input
+            type="file" accept=".json,application/json" ref={fileRef} className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onImportFile(file);
+              e.target.value = '';
+            }}
+          />
+        </div>
+        <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1">
+          {install.canInstall && (
+            <button onClick={install.install} className={ui.link}><Smartphone className="w-3.5 h-3.5" /> Instalar como app</button>
+          )}
+          <button onClick={onSimulateDay} className={ui.link} title="Archiva el día actual y empieza el siguiente">
+            <RotateCcw className="w-3.5 h-3.5" /> Simular nuevo día
+          </button>
         </div>
       </div>
     </div>

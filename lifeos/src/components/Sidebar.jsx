@@ -4,6 +4,7 @@ import {
   Download, Upload, FileSpreadsheet, RotateCcw, Smartphone,
 } from 'lucide-react';
 import { formatReadableDate } from '../lib/dates.js';
+import LogoMark from './LogoMark.jsx';
 
 export const TABS = [
   { id: 'dashboard', label: 'Hoy (Resumen)', icon: LayoutDashboard },
@@ -85,9 +86,7 @@ export default function Sidebar({
       <div>
         <div className="flex items-center justify-between px-2 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-emerald-400 flex items-center justify-center font-bold text-slate-950 light-keep-dark">
-              OS
-            </div>
+            <LogoMark className="w-9 h-9 shrink-0" />
             <div>
               <h1 className="font-bold text-lg tracking-tight">LifeOS</h1>
               <p className="text-xs text-indigo-400 font-medium">{formatReadableDate(todayKey)}</p>
@@ -117,7 +116,7 @@ export default function Sidebar({
         </nav>
       </div>
 
-      <div className="mt-6 pt-4 border-t border-slate-800 space-y-2.5">
+      <div className="hidden md:block mt-6 pt-4 border-t border-slate-800 space-y-2.5">
         {install.canInstall && (
           <button
             onClick={install.install}

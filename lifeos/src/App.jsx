@@ -198,7 +198,18 @@ export default function LifeOSApp() {
           />
         )}
         {activeTab === 'settings' && (
-          <SettingsView prefs={prefs} setPrefs={setPrefs} settings={data.settings} categoryOp={store.categoryOp} showToast={showToast} />
+          <SettingsView
+            prefs={prefs}
+            setPrefs={setPrefs}
+            settings={data.settings}
+            categoryOp={store.categoryOp}
+            showToast={showToast}
+            onExportJSON={exportJSON}
+            onExportCSV={() => exportCSV()}
+            onImportFile={importFile}
+            onSimulateDay={() => setPrefs((p) => ({ ...p, simOffset: p.simOffset + 1 }))}
+            install={install}
+          />
         )}
       </main>
     </div>

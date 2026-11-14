@@ -37,6 +37,10 @@ Panel personal para organizar el día: agenda, finanzas, salud y hábitos en una
 
 Los datos de la versión 5 se migran automáticamente la primera vez que se abre esta versión.
 
+## Diseño
+
+La identidad visual, los colores, la tipografía y las reglas de las gráficas están en [DESIGN.md](DESIGN.md), junto con una guía de cómo usar las herramientas de diseño (Figma, Canva, skills de diseño y visualización) en el proyecto.
+
 ## Uso
 
 ```bash

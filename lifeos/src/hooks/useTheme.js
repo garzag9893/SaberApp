@@ -7,7 +7,7 @@ export function useTheme(theme) {
     const apply = () => {
       const light = theme === 'light' || (theme === 'system' && mq.matches);
       document.documentElement.classList.toggle('light', light);
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', light ? '#f1f5f9' : '#020617');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', light ? '#f3f2f8' : '#14121c');
     };
     apply();
     if (theme !== 'system') return undefined;

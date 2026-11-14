@@ -85,3 +85,12 @@ export const timeToMinutes = (value) => {
 };
 
 export const daysInMonth = (year, month) => new Date(year, month, 0).getDate();
+
+// { weekday: 'sábado', dayMonth: '14 de noviembre' }
+export const formatLongDate = (dateStr) => {
+  const date = fromKey(dateStr);
+  return {
+    weekday: date.toLocaleDateString('es-MX', { weekday: 'long' }),
+    dayMonth: date.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' }),
+  };
+};

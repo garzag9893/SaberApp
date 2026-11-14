@@ -2,7 +2,7 @@
 // - Páginas: primero la red (para recibir actualizaciones); si no hay conexión, la copia guardada.
 // - Archivos estáticos del mismo origen: la copia guardada, y se actualiza en segundo plano.
 // - Las peticiones a otros dominios (Supabase) nunca se guardan.
-const CACHE = 'lifeos-v2';
+const CACHE = 'lifeos-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png'];
 
 self.addEventListener('install', (event) => {

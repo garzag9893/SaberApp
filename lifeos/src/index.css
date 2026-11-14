@@ -1,46 +1,168 @@
 @import "tailwindcss";
 
-/* Los controles nativos de fecha y hora usan el esquema del tema. */
+/*
+ * Sistema de diseño de LifeOS — "Bitácora del día"
+ * ------------------------------------------------
+ * Noche (fondos violeta-grisáceos), Jacaranda (acento principal), Cempasúchil
+ * (el "ahora" y lo destacado), Nopal (ingresos / hecho), Granada (gastos / atrasado)
+ * y Agua (hidratación). Ver DESIGN.md.
+ *
+ * Las clases de la app siguen usando los nombres de Tailwind (slate, indigo, amber…);
+ * aquí se redefinen sus valores, así todo el sistema cambia desde un solo lugar.
+ */
+@theme {
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', 'Figtree Variable', ui-sans-serif, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* Noche: neutros con un toque violeta (fondos, bordes y texto). */
+  --color-slate-50: #f7f6fb;
+  --color-slate-100: #edebf4;
+  --color-slate-200: #dad7e6;
+  --color-slate-300: #bcb7cf;
+  --color-slate-400: #9c96b3;
+  --color-slate-500: #7c7694;
+  --color-slate-600: #5f5976;
+  --color-slate-700: #46415a;
+  --color-slate-800: #2e2a3d;
+  --color-slate-900: #1e1b29;
+  --color-slate-950: #14121c;
+
+  /* Jacaranda: acento principal (navegación, botones, enlaces). */
+  --color-indigo-50: #f3f1fe;
+  --color-indigo-100: #e7e3fd;
+  --color-indigo-200: #d0c8fb;
+  --color-indigo-300: #b3a6f6;
+  --color-indigo-400: #9886f0;
+  --color-indigo-500: #7f6ae6;
+  --color-indigo-600: #6a53d6;
+  --color-indigo-700: #5741b4;
+  --color-indigo-800: #45348c;
+  --color-indigo-900: #362b6b;
+  --color-indigo-950: #211a42;
+
+  /* Cempasúchil: el "ahora", rachas y avisos. */
+  --color-amber-50: #fff7eb;
+  --color-amber-100: #feebc8;
+  --color-amber-200: #fdd58f;
+  --color-amber-300: #fbbd5c;
+  --color-amber-400: #f5a63a;
+  --color-amber-500: #e88d1f;
+  --color-amber-600: #c97014;
+  --color-amber-700: #a05512;
+  --color-amber-800: #7e4314;
+  --color-amber-900: #663713;
+  --color-amber-950: #3a1d07;
+
+  /* Nopal: ingresos y tareas hechas. */
+  --color-emerald-50: #ecfbf4;
+  --color-emerald-100: #d1f5e4;
+  --color-emerald-200: #a6eacb;
+  --color-emerald-300: #6fd9ad;
+  --color-emerald-400: #3fc48f;
+  --color-emerald-500: #22a877;
+  --color-emerald-600: #178862;
+  --color-emerald-700: #156c51;
+  --color-emerald-800: #155642;
+  --color-emerald-900: #134737;
+  --color-emerald-950: #07281f;
+
+  /* Granada: gastos, atrasos y borrar. */
+  --color-rose-50: #fff0f2;
+  --color-rose-100: #ffe0e5;
+  --color-rose-200: #ffc2cc;
+  --color-rose-300: #ff95a6;
+  --color-rose-400: #f9637b;
+  --color-rose-500: #ec3b5c;
+  --color-rose-600: #d11f48;
+  --color-rose-700: #b0163c;
+  --color-rose-800: #921638;
+  --color-rose-900: #7c1734;
+  --color-rose-950: #450818;
+
+  /* Agua: hidratación y tareas que se repiten. */
+  --color-sky-50: #eef8fd;
+  --color-sky-100: #d6effa;
+  --color-sky-200: #b0e0f5;
+  --color-sky-300: #7dcbee;
+  --color-sky-400: #4fb3e3;
+  --color-sky-500: #2e98cc;
+  --color-sky-600: #217aab;
+  --color-sky-700: #1e628a;
+  --color-sky-800: #1f5372;
+  --color-sky-900: #1f4560;
+  --color-sky-950: #142c40;
+}
+
 :root {
   color-scheme: dark;
 }
 
 /*
- * Tema claro: la interfaz usa la escala "slate" de Tailwind para fondos y textos.
- * En modo claro esa escala se invierte y los tonos de acento claros (300/400),
- * pensados para fondo oscuro, se oscurecen para mantener el contraste.
+ * Tema claro: la escala Noche se invierte (papel lavanda, tarjetas blancas, tinta oscura)
+ * y los acentos claros (300/400), pensados para fondo oscuro, se oscurecen para mantener
+ * el contraste.
  */
 :root.light {
   color-scheme: light;
 
-  --color-slate-950: oklch(96.8% 0.007 247.896);   /* fondo de la página */
-  --color-slate-900: oklch(100% 0 0);              /* tarjetas */
-  --color-slate-800: oklch(92.9% 0.013 255.508);   /* filas y bordes */
-  --color-slate-700: oklch(86.9% 0.022 252.894);
-  --color-slate-600: oklch(70.4% 0.04 256.788);
-  --color-slate-500: oklch(55.4% 0.046 257.417);
-  --color-slate-400: oklch(44.6% 0.043 257.281);
-  --color-slate-300: oklch(37.2% 0.044 257.287);
-  --color-slate-200: oklch(27.9% 0.041 260.031);
-  --color-slate-100: oklch(20.8% 0.042 265.755);   /* texto principal */
-  --color-slate-50: oklch(12.9% 0.042 264.695);
+  --color-slate-950: #f3f2f8;
+  --color-slate-900: #ffffff;
+  --color-slate-800: #e9e7f1;
+  --color-slate-700: #d6d2e3;
+  --color-slate-600: #a9a3bf;
+  --color-slate-500: #77718f;
+  --color-slate-400: #5f5976;
+  --color-slate-300: #46415a;
+  --color-slate-200: #2e2a3d;
+  --color-slate-100: #1e1b29;
+  --color-slate-50: #14121c;
 
-  --color-indigo-950: oklch(96.2% 0.018 272.314);
-  --color-indigo-400: oklch(51.1% 0.262 276.966);
-  --color-indigo-300: oklch(45.7% 0.24 277.023);
-  --color-indigo-200: oklch(39.8% 0.195 277.366);
-  --color-emerald-400: oklch(59.6% 0.145 163.225);
-  --color-emerald-300: oklch(50.8% 0.118 165.612);
-  --color-rose-400: oklch(58.6% 0.253 17.585);
-  --color-rose-300: oklch(51.4% 0.222 16.935);
-  --color-amber-400: oklch(66.6% 0.179 58.318);
-  --color-amber-300: oklch(55.5% 0.163 48.998);
-  --color-amber-200: oklch(47.3% 0.137 46.201);
-  --color-sky-400: oklch(58.8% 0.158 241.966);
-  --color-sky-300: oklch(50% 0.134 242.749);
+  --color-indigo-950: #f3f1fe;
+  --color-indigo-400: #6a53d6;
+  --color-indigo-300: #5741b4;
+  --color-indigo-200: #45348c;
+  --color-emerald-400: #178862;
+  --color-emerald-300: #156c51;
+  --color-rose-400: #d11f48;
+  --color-rose-300: #b0163c;
+  --color-amber-400: #c97014;
+  --color-amber-300: #a05512;
+  --color-amber-200: #7e4314;
+  --color-sky-400: #217aab;
+  --color-sky-300: #1e628a;
 }
 
-/* El logo conserva sus letras oscuras sobre el degradado en ambos temas. */
-:root.light .light-keep-dark {
-  color: oklch(12.9% 0.042 264.695);
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+
+  /* Foco visible con teclado en todos los controles. */
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-amber-400);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Cifras: montos, horas y conteos con números de ancho fijo. */
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

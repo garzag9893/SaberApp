@@ -5,43 +5,31 @@ import {
 import { formatReadableDate, getShortDayName } from '../lib/dates.js';
 import { habitStreak, nextHabitId } from '../lib/habits.js';
 import { ui } from '../components/ui.jsx';
+import { SleepChart, EnergyChart } from '../components/MiniCharts.jsx';
 
 const MAX_WATER = 15;
 
-function WeeklyChart({ health }) {
-  const recent = [...(health.dailyLogs || [])].slice(0, 6).reverse()
-    .map((log) => ({ key: log.date, day: getShortDayName(log.date), sleep: log.sleep, mood: log.mood, isToday: false }));
-  const data = [...recent, { key: 'hoy', day: 'Hoy', sleep: health.sleepHours, mood: health.mood, isToday: true }];
-  const bar = (value, max, on, off, title) => (
-    <div className="relative w-3 sm:w-4 bg-slate-800/60 rounded-t-md h-full flex items-end" title={title}>
-      <div style={{ height: `${value == null ? 0 : Math.min((value / max) * 100, 100)}%` }} className={`w-full rounded-t-md transition-all duration-300 ${on}`} />
-      {value == null && <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 text-[9px] ${off}`}>–</span>}
-    </div>
-  );
+function WeeklyCharts({ health }) {
+  const recent = [...(health.dailyLogs || [])].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6).reverse()
+    .map((log) => ({ key: log.date, day: getShortDayName(log.date), sleep: log.sleep ?? null, mood: log.mood ?? null, isToday: false }));
+  const days = [...recent, { key: 'hoy', day: 'Hoy', sleep: health.sleepHours, mood: health.mood, isToday: true }];
   return (
     <div className={`${ui.card} p-6`}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
-        <div>
-          <h3 className="font-semibold text-base flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-indigo-400" /> Evolución de los Últimos 7 Días
-          </h3>
-          <p className="text-xs text-slate-400">Se archiva automáticamente a medianoche y reinicia tus metas diarias.</p>
-        </div>
-        <div className="flex items-center gap-4 text-xs">
-          <span className="flex items-center gap-1.5 text-indigo-300"><span className="w-2.5 h-2.5 rounded-sm bg-indigo-500" /> Sueño (máx 10h)</span>
-          <span className="flex items-center gap-1.5 text-amber-300"><span className="w-2.5 h-2.5 rounded-sm bg-amber-400" /> Energía (1-5)</span>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1 mb-5">
+        <h3 className="font-semibold text-base flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-indigo-400" /> Últimos {days.length} días
+        </h3>
+        <p className="text-xs text-slate-500">Cada día se archiva a medianoche.</p>
       </div>
-      <div className="grid gap-2 sm:gap-4 items-end h-44 pt-4 px-2 border-b border-slate-800" style={{ gridTemplateColumns: `repeat(${data.length}, minmax(0, 1fr))` }}>
-        {data.map((d) => (
-          <div key={d.key} className="flex flex-col items-center h-full justify-end">
-            <div className="flex items-end gap-1 sm:gap-1.5 w-full justify-center h-32">
-              {bar(d.sleep, 10, d.isToday ? 'bg-indigo-400' : 'bg-indigo-600/80', 'text-indigo-300', d.sleep == null ? 'Sueño sin registrar' : `${d.sleep} hrs de sueño`)}
-              {bar(d.mood, 5, d.isToday ? 'bg-amber-400' : 'bg-amber-500/80', 'text-amber-300', d.mood == null ? 'Energía sin registrar' : `Energía: ${d.mood}/5`)}
-            </div>
-            <span className={`text-xs mt-2 font-medium ${d.isToday ? 'text-indigo-400 font-bold' : 'text-slate-400'}`}>{d.day}</span>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <p className="text-sm font-medium text-slate-200 mb-2 flex items-center gap-2"><Moon className="w-4 h-4 text-indigo-400" /> Sueño</p>
+          <SleepChart days={days} />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-slate-200 mb-2 flex items-center gap-2"><Activity className="w-4 h-4 text-amber-400" /> Energía</p>
+          <EnergyChart days={days} />
+        </div>
       </div>
     </div>
   );
@@ -73,7 +61,7 @@ export default function HealthView({ health, updateHealth, showToast }) {
 
   return (
     <div className="space-y-6">
-      <WeeklyChart health={health} />
+      <WeeklyCharts health={health} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className={`${ui.card} p-6 space-y-6`}>
@@ -85,7 +73,7 @@ export default function HealthView({ health, updateHealth, showToast }) {
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="flex items-center gap-2 text-sky-400"><Droplets className="w-4 h-4" /> Hidratación</span>
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 num">
                 {health.water} /
                 <select
                   aria-label="Meta diaria de vasos de agua" title="Meta diaria" value={health.waterGoal}
@@ -114,7 +102,7 @@ export default function HealthView({ health, updateHealth, showToast }) {
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="flex items-center gap-2 text-indigo-400"><Moon className="w-4 h-4" /> Horas de Sueño</span>
-              <span className={health.sleepHours == null ? 'text-xs text-slate-500' : 'font-bold text-indigo-300'}>
+              <span className={health.sleepHours == null ? 'text-xs text-slate-500' : 'num font-semibold text-indigo-300'}>
                 {health.sleepHours == null ? '¿Cuánto dormiste?' : `${health.sleepHours} hrs`}
               </span>
             </div>
@@ -235,7 +223,7 @@ export default function HealthView({ health, updateHealth, showToast }) {
           <p className="text-sm text-slate-500">Aún no hay días anteriores archivados.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {health.dailyLogs.map((log) => (
+            {[...health.dailyLogs].sort((a, b) => b.date.localeCompare(a.date)).map((log) => (
               <div key={log.date} className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 flex flex-col justify-between gap-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold text-slate-200">{formatReadableDate(log.date)}</span>

@@ -73,7 +73,7 @@ function TaskRow({ task, todayKey, showDate, conflicts, onToggle, onEdit, onDele
         <div className="min-w-0">
           <p className={`text-sm font-medium break-words ${task.completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>{task.title}</p>
           <div className="flex flex-wrap items-center gap-2 mt-1">
-            <span className="text-xs text-indigo-400 font-medium flex items-center gap-1">
+            <span className="num text-xs text-indigo-400 flex items-center gap-1">
               <Clock className="w-3 h-3" /> {formatTimeRange(task)}
             </span>
             {overdue ? (
@@ -163,7 +163,7 @@ function WeekView({ tasks, todayKey, weekStart, setWeekStart, conflicts, onToggl
                         conflicts[task.id] ? 'border-amber-500/40 bg-amber-500/10' : 'border-slate-700/60 bg-slate-900/60'
                       } hover:border-indigo-500/50`}
                     >
-                      <span className="block text-indigo-400 font-medium">
+                      <span className="block num text-indigo-400">
                         {isTime(task.time) ? formatTimeRange(task) : 'Sin hora'}
                         {task.repeat !== 'none' && <Repeat className="inline w-2.5 h-2.5 ml-1" />}
                       </span>
