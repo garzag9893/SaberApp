@@ -96,6 +96,19 @@
 
 :root {
   color-scheme: dark;
+
+  /*
+   * Colores de gráficas, validados con la skill dataviz para daltonismo y contraste.
+   * Ingresos/gastos: azul y naranja (verde contra rojo no se distingue con deuteranopia).
+   * Constancia de hábitos: escala ordinal de un solo tono (jacaranda), del nivel 1 al 4.
+   */
+  --viz-income: #3987e5;
+  --viz-expense: #d95926;
+  --heat-0: #2e2a3d;
+  --heat-1: #5741b4;
+  --heat-2: #7f6ae6;
+  --heat-3: #a796f3;
+  --heat-4: #d6cffb;
 }
 
 /*
@@ -105,6 +118,14 @@
  */
 :root.light {
   color-scheme: light;
+
+  --viz-income: #2a78d6;
+  --viz-expense: #eb6834;
+  --heat-0: #e9e7f1;
+  --heat-1: #b3a6f6;
+  --heat-2: #7f6ae6;
+  --heat-3: #5741b4;
+  --heat-4: #362b6b;
 
   --color-slate-950: #f3f2f8;
   --color-slate-900: #ffffff;

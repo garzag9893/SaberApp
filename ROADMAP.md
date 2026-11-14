@@ -99,7 +99,7 @@ Basado en `lifeos/DESIGN.md`. Puede avanzar mientras esperas a revisar etapas de
 
 | # | Tarea | Herramienta | Tamaño |
 |---|---|---|---|
-| 3.1 | Tendencia de gastos por mes y calendario de calor de hábitos | Skill dataviz | M |
+| 3.1 | ✅ Tendencia de ingresos y gastos por mes y calendario de constancia de hábitos | Skill dataviz | M |
 | 3.2 | Pantalla de bienvenida para usuarios nuevos | Figma + frontend-design | M |
 | 3.3 | Ilustraciones para bienvenida y estados vacíos | Higgsfield | S |
 | 3.4 | Kit de marca y capturas para compartir | Canva | S |

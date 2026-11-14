@@ -30,6 +30,17 @@ Es la paleta de referencia de la skill de visualización, **validada con su scri
 
 El **orden** es parte de la validación: colores vecinos siempre se distinguen. Las categorías nuevas toman el siguiente color libre en ese orden. La paleta anterior (emerald/indigo/rose/amber/violet de Tailwind) **fallaba** la prueba de luminosidad.
 
+### Colores de las gráficas de tendencia
+
+Están definidos como variables en `src/index.css` (`--viz-income`, `--viz-expense` y `--heat-0` a `--heat-4`) y cambian solos con el tema.
+
+| Gráfica | Colores | Por qué |
+|---|---|---|
+| Ingresos y gastos por mes | Azul `#3987e5` y naranja `#d95926` (oscuro) · `#2a78d6` y `#eb6834` (claro) | Verde contra rojo **falló** la prueba de deuteranopia (diferencia 3.7; el mínimo es 8). Azul contra naranja da 26.8 |
+| Constancia de hábitos | Escala de un solo tono, jacaranda, del nivel 1 al 4 | Es una magnitud ordenada (ninguno → todos); un solo tono hace que el orden se lea en el color. En oscuro se subió un paso porque el nivel 1 casi desaparecía sobre el fondo |
+
+En el resto de la app, los montos siguen en verde y rojo porque siempre llevan signo **+** o **−**, que sirve de segunda señal.
+
 ### Tipografía
 
 | Rol | Fuente | Dónde |
@@ -56,7 +67,7 @@ Estas son las herramientas disponibles en las sesiones de Claude y cómo sirven 
 | Herramienta | Para qué sirve en LifeOS | Ejemplos de uso |
 |---|---|---|
 | **Skill frontend-design** | Dirección visual, sistema de tokens y crítica de pantallas | ✅ Usada en esta versión: identidad "Bitácora del día", reloj del día, tipografía. Siguiente: pantalla de bienvenida, estados vacíos y una página de presentación. |
-| **Skill dataviz** (con su validador de paletas) | Elegir el tipo de gráfica, validar colores para daltonismo y diseñar tooltips | ✅ Usada: paleta de categorías validada, gráficas de salud separadas, dona con separación y detalle al señalar. Siguiente: tendencia de gastos por mes, calendario de calor de hábitos (un solo tono, de claro a oscuro) y barras de presupuesto. |
+| **Skill dataviz** (con su validador de paletas) | Elegir el tipo de gráfica, validar colores para daltonismo y diseñar tooltips | ✅ Usada: paleta de categorías validada, gráficas de salud separadas, dona con separación y detalle al señalar, tendencia mensual de ingresos y gastos y calendario de constancia de hábitos. Siguiente: barras de presupuesto por categoría a lo largo de los meses. |
 | **Capturas con Playwright** (navegador incluido) | Revisar cada pantalla en escritorio, celular, tema claro y oscuro | ✅ Usadas para criticar este rediseño (detectaron la dona que mostraba la categoría equivocada). Siguiente: pruebas de regresión visual en CI que comparen capturas antes y después de cada cambio. |
 | **Figma** (conector) | Diseñar y probar pantallas antes de programarlas | Pasar las pantallas actuales a Figma para iterar; crear una biblioteca de componentes con los tokens de este archivo; diagramar en FigJam los flujos (entrada rápida, sincronización). |
 | **Canva** (conector) | Material de difusión con la misma identidad | Kit de marca con la paleta y las fuentes; publicaciones para redes; capturas para tiendas de apps; presentación del proyecto. |

@@ -9,6 +9,8 @@ import { categoryNames, categoryColor } from '../lib/categories.js';
 import { ruleStartMonth, describeRule } from '../lib/recurringTx.js';
 import { matchesQuery } from '../lib/text.js';
 import { ui, money, EditActions, Field, SectionTitle } from '../components/ui.jsx';
+import { MonthlyTrend } from '../components/TrendCharts.jsx';
+import { monthlySeries } from '../lib/trends.js';
 
 function TypeToggle({ value, onChange }) {
   const btn = (type, label, on) => (
@@ -225,6 +227,21 @@ export default function FinancesView({
           <p className={`num text-2xl font-semibold mt-1 ${summary.balance < 0 ? 'text-rose-400' : 'text-slate-50'}`}>
             {summary.balance < 0 ? '-' : ''}${money(Math.abs(summary.balance))}
           </p>
+        </div>
+      </div>
+
+      <div className={`${ui.card} p-6`}>
+        <SectionTitle icon={TrendingUp} sub="Ingresos y gastos de los últimos 6 meses. Toca un mes para verlo completo.">Tendencia</SectionTitle>
+        <div className="mt-4">
+          <MonthlyTrend
+            series={monthlySeries(transactions, currentMonth, 6)}
+            selected={month}
+            onSelect={(m) => {
+              setMonth(m);
+              setEditingId(null);
+              setEditingBudgets(false);
+            }}
+          />
         </div>
       </div>
 

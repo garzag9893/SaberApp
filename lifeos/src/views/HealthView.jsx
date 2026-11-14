@@ -3,7 +3,8 @@ import {
   BarChart3, Droplets, Moon, Activity, History, CheckCircle2, Circle, Pencil, Check, Trash2, Plus, Flame,
 } from 'lucide-react';
 import { formatReadableDate, getShortDayName } from '../lib/dates.js';
-import { habitStreak, nextHabitId } from '../lib/habits.js';
+import { habitStreak, nextHabitId, habitCalendar } from '../lib/habits.js';
+import { HabitHeatmap } from '../components/TrendCharts.jsx';
 import { ui } from '../components/ui.jsx';
 import { SleepChart, EnergyChart } from '../components/MiniCharts.jsx';
 
@@ -213,6 +214,16 @@ export default function HealthView({ health, updateHealth, showToast }) {
             </div>
           )}
         </div>
+      </div>
+
+      <div className={`${ui.card} p-6`}>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1 mb-4">
+          <h3 className="font-semibold text-base flex items-center gap-2">
+            <Flame className="w-4 h-4 text-amber-400" /> Constancia de hábitos
+          </h3>
+          <p className="text-xs text-slate-500">Últimas 12 semanas · hoy está marcado</p>
+        </div>
+        <HabitHeatmap calendar={habitCalendar(health, 12)} />
       </div>
 
       <div className={`${ui.card} p-6`}>
