@@ -87,7 +87,7 @@ async function main() {
     const phone = { width: 390, height: 844 };
     const shots = {};
     const app = await appPage(browser, { viewport: phone });
-    const nav = (name) => app.page.locator('aside nav').getByRole('button', { name });
+    const nav = (name) => app.page.locator('nav[data-nav]:visible').getByRole('button', { name });
     const main = app.page.locator('main');
     // Desplaza la página para que el elemento quede a `offset` px del borde superior.
     const scrollTo = async (locator, offset) => {

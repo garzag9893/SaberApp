@@ -111,4 +111,4 @@ export async function openApp(page) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-export const nav = (page, name) => page.locator('aside nav').getByRole('button', { name });
+export const nav = (page, name) => page.locator('nav[data-nav]:visible').getByRole('button', { name });

@@ -6,13 +6,50 @@ import {
 import { formatReadableDate } from '../lib/dates.js';
 import LogoMark from './LogoMark.jsx';
 
+// `short` es el nombre visible en la barra inferior del celular; `label`, el nombre completo
+// (el accesible lo incluye, así lo que se ve y lo que se anuncia coinciden).
 export const TABS = [
-  { id: 'dashboard', label: 'Hoy (Resumen)', icon: LayoutDashboard },
-  { id: 'finances', label: 'Finanzas', icon: Wallet },
-  { id: 'health', label: 'Salud y Hábitos', icon: HeartPulse },
-  { id: 'agenda', label: 'Agenda', icon: Calendar },
-  { id: 'settings', label: 'Ajustes', icon: Settings },
+  { id: 'dashboard', label: 'Hoy (Resumen)', short: 'Hoy', icon: LayoutDashboard },
+  { id: 'finances', label: 'Finanzas', short: 'Finanzas', icon: Wallet },
+  { id: 'health', label: 'Salud y Hábitos', short: 'Salud', icon: HeartPulse },
+  { id: 'agenda', label: 'Agenda', short: 'Agenda', icon: Calendar },
+  { id: 'settings', label: 'Ajustes', short: 'Ajustes', icon: Settings },
 ];
+
+// Navegación del celular: abajo, al alcance del pulgar, sin desplazarse de lado.
+export function BottomNav({ activeTab, onTab }) {
+  return (
+    <nav
+      data-nav
+      aria-label="Secciones"
+      className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-slate-900 border-t border-slate-800 pb-[env(safe-area-inset-bottom)]"
+    >
+      <ul className="grid grid-cols-5">
+        {TABS.map(({ id, label, short, icon: Icon }) => {
+          const active = activeTab === id;
+          return (
+            <li key={id}>
+              <button
+                type="button"
+                onClick={() => onTab(id)}
+                aria-label={label}
+                aria-current={active ? 'page' : undefined}
+                className={`w-full min-h-16 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${
+                  active ? 'text-indigo-300' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <span className={`flex items-center justify-center w-14 h-8 rounded-full transition-colors ${active ? 'bg-indigo-500/20' : ''}`} aria-hidden="true">
+                  <Icon className="w-5 h-5" />
+                </span>
+                <span aria-hidden="true">{short}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
 
 const BADGE = {
   synced: { label: 'Nube', title: 'Sincronizado en la nube', Icon: Cloud, cls: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' },
@@ -84,7 +121,7 @@ export default function Sidebar({
   return (
     <aside className="w-full md:w-64 md:shrink-0 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 p-4 flex flex-col justify-between">
       <div>
-        <div className="flex items-center justify-between px-2 mb-6">
+        <div className="flex items-center justify-between px-2 md:mb-6">
           <div className="flex items-center gap-3">
             <LogoMark className="w-9 h-9 shrink-0" />
             <div>
@@ -97,7 +134,7 @@ export default function Sidebar({
 
         {cloud.enabled && !cloud.session && cloud.showLogin && <LoginForm cloud={cloud} />}
 
-        <nav className="flex md:flex-col gap-1 overflow-x-auto">
+        <nav data-nav aria-label="Secciones" className="hidden md:flex md:flex-col gap-1">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}

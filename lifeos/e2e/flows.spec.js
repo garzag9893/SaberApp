@@ -208,3 +208,31 @@ test('ajustes: borrar todo y deshacer', async ({ page }) => {
   await page.getByRole('status').getByRole('button', { name: 'Deshacer' }).click();
   await expect(page.getByText('Dentista', { exact: true })).toBeVisible();
 });
+
+test.describe('celular: navegación inferior', () => {
+  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+  test('las 5 secciones caben abajo, se tocan con el pulgar y marcan la activa', async ({ page }) => {
+    await openApp(page);
+    const bar = page.getByRole('navigation', { name: 'Secciones' }).filter({ visible: true });
+    const buttons = bar.getByRole('button');
+    await expect(buttons).toHaveCount(5);
+    const box = await bar.boundingBox();
+    expect(box.y + box.height).toBeCloseTo(844, 0); // pegada al borde inferior
+    for (const b of await buttons.all()) {
+      const r = await b.boundingBox();
+      expect(r.x).toBeGreaterThanOrEqual(0);
+      expect(r.x + r.width).toBeLessThanOrEqual(390); // sin desplazamiento lateral
+      expect(r.height).toBeGreaterThanOrEqual(44);
+    }
+    await bar.getByRole('button', { name: 'Ajustes' }).click();
+    await expect(bar.getByRole('button', { name: 'Ajustes' })).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByRole('heading', { name: 'Ajustes', level: 2 })).toBeVisible();
+
+    // El final del contenido no queda tapado por la barra.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    const last = await page.locator('main > *').last().boundingBox();
+    const barTop = (await bar.boundingBox()).y;
+    expect(last.y + last.height).toBeLessThanOrEqual(barTop);
+  });
+});

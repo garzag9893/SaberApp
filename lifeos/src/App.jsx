@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import Sidebar from './components/Sidebar.jsx';
+import Sidebar, { BottomNav } from './components/Sidebar.jsx';
 import Toast from './components/Toast.jsx';
 import QuickAddBar from './components/QuickAddBar.jsx';
 import DashboardView from './views/DashboardView.jsx';
@@ -204,7 +204,7 @@ export default function LifeOSApp() {
         onImportFile={importFile}
       />
 
-      <main id="contenido" tabIndex={-1} className="flex-1 min-w-0 p-4 md:p-8 max-w-6xl mx-auto w-full focus:outline-none">
+      <main id="contenido" tabIndex={-1} className="flex-1 min-w-0 p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:p-8 max-w-6xl mx-auto w-full focus:outline-none">
         <QuickAddBar onSubmit={handleQuickAdd} />
 
         {activeTab === 'dashboard' && (
@@ -268,6 +268,8 @@ export default function LifeOSApp() {
           />
         )}
       </main>
+
+      <BottomNav activeTab={activeTab} onTab={setActiveTab} />
     </div>
   );
 }

@@ -6,7 +6,7 @@ export default function Toast({ toast, onDismiss }) {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-50 bg-indigo-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2"
+      className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-50 bg-indigo-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2"
     >
       <Sparkles className="w-4 h-4 shrink-0" />
       <span className="text-sm font-medium flex-1">{toast.msg}</span>
