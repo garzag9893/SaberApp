@@ -41,6 +41,10 @@ Basado en `DESIGN.md`.
 | 2.3 | ✅ Ilustraciones vectoriales con los colores del sistema para la bienvenida y los estados vacíos | Código (SVG) | S |
 | 2.4 | ✅ Kit de marca: imagen para compartir enlaces, capturas en marco de teléfono y hoja de marca (`npm run brand`) | Playwright | S |
 | 2.5 | ✅ Pruebas de regresión visual automáticas, flujos completos y contraste de colores | Playwright y Vitest en CI | S |
+| 2.6 | ✅ Resumen: crítica (23/40), auditoría (13/20), corrección de los 4 problemas importantes, pulido y navegación inferior en celular | impeccable | M |
+| 2.7 | Repetir la crítica del Resumen para medir la mejora | impeccable `critique` | S |
+| 2.8 | Bienvenida: crítica, auditoría, correcciones y pulido (empezar por quitar los textos pequeños encima de los títulos) | impeccable | M |
+| 2.9 | Mismo flujo para Agenda, Finanzas, Salud y Ajustes, una pantalla a la vez | impeccable | L |
 
 ## 3. Automatizaciones
 
