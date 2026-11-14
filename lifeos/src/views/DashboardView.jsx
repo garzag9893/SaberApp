@@ -52,10 +52,10 @@ function headline(today, nowMinutes, todayKey) {
 
 function Notice({ children, action, onAction, tone = 'text-slate-300' }) {
   return (
-    <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5 border-t border-slate-800 first:border-t-0">
-      <span className={`text-sm ${tone}`}>{children}</span>
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 py-1 border-t border-slate-800 first:border-t-0">
+      <span className={`text-sm py-2 ${tone}`}>{children}</span>
       {action && (
-        <button type="button" onClick={onAction} className="text-sm font-medium text-indigo-400 hover:text-indigo-300 min-h-11 px-2 -mx-2">
+        <button type="button" onClick={onAction} className="text-sm font-medium text-right text-indigo-400 hover:text-indigo-300 min-h-11 px-2 -mr-2">
           {action}
         </button>
       )}
@@ -88,11 +88,19 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
 
   // Avisos en orden de urgencia: lo atrasado, luego el dinero, luego el registro del día.
   const notices = [];
+  const extraOverdue = overdue.length - 2;
   overdue.slice(0, 2).forEach((t) => notices.push(
     <Notice key={`o-${t.id}`} action="Pasar a hoy" onAction={() => onMoveToToday(t.id)}>
       <span className="text-rose-400 font-medium">Pendiente</span> desde el {formatReadableDate(t.date).toLowerCase()}: {t.title}
     </Notice>,
   ));
+  if (extraOverdue > 0) {
+    notices.push(
+      <Notice key="o-more" action="Ver en la agenda" onAction={() => onNavigate('agenda')} tone="text-slate-400">
+        y {extraOverdue} {extraOverdue === 1 ? 'pendiente más' : 'pendientes más'} de días anteriores
+      </Notice>,
+    );
+  }
   if (hasMoney) {
     overBudget.slice(0, 1).forEach(({ name: cat, status }) => notices.push(
       <Notice key={`b-${cat}`} action="Ver presupuesto" onAction={() => onNavigate('finances')}>
@@ -114,7 +122,7 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
       <section className={`${ui.card} p-6 md:p-8 grid gap-8 lg:grid-cols-[auto_minmax(0,1fr)] items-center`} aria-labelledby="hoy-sigue">
         <DayDial tasks={dialTasks} nowMinutes={now} onToggleTask={onToggleTask} />
         <div className="min-w-0">
-          <h2 id="hoy-sigue" className="font-display text-[clamp(1.875rem,5vw,2.875rem)] font-bold text-slate-50 leading-[1.05] break-words text-balance">
+          <h2 id="hoy-sigue" title={head.title} className="font-display text-[clamp(1.875rem,5vw,2.875rem)] font-bold text-slate-50 leading-[1.05] break-words text-balance line-clamp-3">
             {head.done && <PartyPopper className="inline w-[0.8em] h-[0.8em] mr-2 -mt-1 text-amber-400" aria-hidden="true" />}
             {head.title}
           </h2>
@@ -176,7 +184,7 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
                   <li key={task.id}>
                     <button
                       type="button" role="checkbox" aria-checked={task.completed} onClick={() => onToggleTask(task.id)}
-                      className="w-full text-left grid grid-cols-[5.75rem_1.25rem_1fr] items-center gap-3 px-2 py-3 rounded-xl hover:bg-slate-800/60"
+                      className="w-full text-left grid grid-cols-[5.75rem_1.25rem_minmax(0,1fr)] items-center gap-3 px-2 py-3 rounded-xl hover:bg-slate-800/60"
                     >
                       {late
                         ? <span className="text-xs font-semibold text-rose-400">{formatReadableDate(task.date)}</span>
@@ -212,11 +220,11 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
               <dl className="mt-3 space-y-1">
                 <div className="flex items-baseline justify-between gap-4">
                   <dt className="text-sm text-slate-400">Ingresos</dt>
-                  <dd className="num text-sm text-emerald-400">+${money(month.income)}</dd>
+                  <dd className={`num text-sm ${month.income ? 'text-emerald-400' : 'text-slate-400'}`}>{month.income ? '+' : ''}${money(month.income)}</dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-4">
                   <dt className="text-sm text-slate-400">Gastos</dt>
-                  <dd className="num text-sm text-slate-200">−${money(month.expense)}</dd>
+                  <dd className="num text-sm text-slate-200">{month.expense ? '−' : ''}${money(month.expense)}</dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-4 pt-2 mt-1 border-t border-slate-800">
                   <dt className="text-sm text-slate-100 font-medium">Te queda</dt>

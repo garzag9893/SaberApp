@@ -165,6 +165,11 @@
     letter-spacing: -0.015em;
   }
 
+  /* Evita una palabra sola en la última línea de un párrafo. */
+  p, li, dd {
+    text-wrap: pretty;
+  }
+
   /* Foco visible con teclado en todos los controles. */
   :where(button, a, input, select, textarea, [tabindex]):focus-visible {
     outline: 2px solid var(--color-amber-400);

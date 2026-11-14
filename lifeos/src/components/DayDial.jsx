@@ -196,13 +196,13 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
           ) : (
             <>
               <p className="text-xs uppercase tracking-[0.14em] font-semibold text-amber-400">
-                {!timed.length ? 'Día libre' : unchecked ? 'Pendiente' : 'Todo hecho'}
+                {!timed.length ? 'Día libre' : unchecked ? 'Hoy' : 'Todo hecho'}
               </p>
               <p className="text-sm text-slate-300 leading-snug mt-1">
                 {!timed.length
                   ? 'Agenda algo con hora para verlo aquí'
                   : unchecked
-                    ? `${unchecked} ${unchecked === 1 ? 'tarea de antes sin marcar' : 'tareas de antes sin marcar'}`
+                    ? `${unchecked} ${unchecked === 1 ? 'tarea con hora por hacer' : 'tareas con hora por hacer'}`
                     : 'No quedan tareas con hora hoy'}
               </p>
             </>
