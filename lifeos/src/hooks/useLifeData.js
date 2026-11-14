@@ -102,6 +102,28 @@ export function useLifeData({ onSaveError } = {}) {
 
       applyRemote: (remote) => setData((d) => mergeData(d, remote)),
 
+      // Reemplaza todo (empezar desde cero, o deshacer un borrado total). Lo que había se borra
+      // también de la nube. Devuelve los datos anteriores para poder deshacer.
+      replaceAll: (next) => {
+        const prev = dataRef.current;
+        const now = nowIso();
+        const tombstonesFor = (coll) => {
+          const keep = new Set(next[coll].map((x) => x.id));
+          const out = { ...prev.deleted[coll] };
+          prev[coll].forEach((x) => { if (!keep.has(x.id)) out[x.id] = now; });
+          next[coll].forEach((x) => { delete out[x.id]; });
+          return out;
+        };
+        setData({
+          ...next,
+          tasks: next.tasks.map((t) => ({ ...t, updatedAt: now })),
+          transactions: next.transactions.map((t) => ({ ...t, updatedAt: now })),
+          deleted: { tasks: tombstonesFor('tasks'), transactions: tombstonesFor('transactions') },
+          stamps: { health: now, budgets: now, settings: now },
+        });
+        return prev;
+      },
+
       // Restaura un respaldo. Lo restaurado se marca como la versión más reciente, y lo que no
       // venía en el respaldo se borra también de la nube.
       importData: (raw) => {

@@ -149,3 +149,62 @@ test('accesibilidad: botones y campos tienen nombre en todas las pantallas', asy
   }
   expect(problems).toEqual([]);
 });
+
+test.describe('primera vez', () => {
+  test.use({ seed: false });
+
+  test('bienvenida: nombre, prueba de entrada rápida y empezar desde cero', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Tu día, en un solo vistazo.' })).toBeVisible();
+    await page.getByPlaceholder('Tu nombre').fill('Ana');
+    await page.getByRole('button', { name: 'Continuar' }).click();
+
+    // La prueba usa la lógica real de la entrada rápida, sin guardar nada.
+    await page.getByLabel('Prueba la entrada rápida').fill('Gym cada lunes 7am');
+    await expect(page.getByText('Se repite: semanal')).toBeVisible();
+    await page.getByRole('button', { name: 'Continuar' }).click();
+
+    await page.getByRole('radio', { name: /Desde cero/ }).click();
+    await page.getByRole('button', { name: 'Entrar a LifeOS' }).click();
+
+    await expect(page.getByText('Buenos días, Ana.')).toBeVisible();
+    await expect(page.getByText('Nada agendado para hoy.')).toBeVisible();
+    await nav(page, 'Salud y Hábitos').click();
+    await page.getByRole('button', { name: '+ Leer 20 minutos' }).click();
+    await expect(page.locator('main button[aria-pressed]', { hasText: 'Leer 20 minutos' })).toBeVisible();
+
+    // Al recargar ya no aparece la bienvenida.
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'LifeOS' })).toBeVisible();
+  });
+
+  test('bienvenida: con datos de ejemplo', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Saltar' }).click();
+    await nav(page, 'Agenda').click();
+    await expect(page.getByText('Preparar presentación de proyecto')).toBeVisible();
+  });
+});
+
+test('ajustes: volver a ver la bienvenida sin perder datos', async ({ page }) => {
+  await openApp(page);
+  await nav(page, 'Ajustes').click();
+  await page.getByRole('button', { name: 'Ver el recorrido de bienvenida' }).click();
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await expect(page.getByRole('heading', { name: 'Eso es todo.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Entrar a LifeOS' }).click();
+  await nav(page, 'Agenda').click();
+  await expect(page.getByText('Dentista', { exact: true })).toBeVisible();
+});
+
+test('ajustes: borrar todo y deshacer', async ({ page }) => {
+  await openApp(page);
+  await nav(page, 'Ajustes').click();
+  await page.getByRole('button', { name: 'Borrar todos los datos y empezar de cero' }).click();
+  await page.getByRole('button', { name: 'Sí, borrar todo' }).click();
+  await nav(page, 'Agenda').click();
+  await expect(page.getByText('No hay tareas programadas para esta vista.')).toBeVisible();
+  await page.getByRole('status').getByRole('button', { name: 'Deshacer' }).click();
+  await expect(page.getByText('Dentista', { exact: true })).toBeVisible();
+});

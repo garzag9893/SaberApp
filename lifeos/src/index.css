@@ -181,9 +181,25 @@
   }
 }
 
+/* Movimiento de las ilustraciones y la bienvenida (se desactiva con "reducir movimiento"). */
+@keyframes lo-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes lo-pop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+@keyframes lo-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes lo-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
+@keyframes lo-twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+.lo-draw { stroke-dasharray: 1; animation: lo-draw 0.9s cubic-bezier(0.3, 0.7, 0.2, 1) both; }
+.lo-pop { animation: lo-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) both; transform-box: view-box; }
+.lo-rise { animation: lo-rise 0.5s ease-out both; }
+.lo-float { animation: lo-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) both, lo-float 5s ease-in-out 0.5s infinite; }
+.lo-float-slow { animation: lo-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) both, lo-float 7s ease-in-out 0.5s infinite; }
+.lo-twinkle { animation: lo-twinkle 3s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important; /* sin flotación continua */
   }
 }

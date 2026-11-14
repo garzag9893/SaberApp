@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Palette, Bell, Tags, Moon, Sun, Monitor, Trash2, Plus, Database, Download, Upload, FileSpreadsheet, RotateCcw, Smartphone } from 'lucide-react';
+import { Palette, Bell, Tags, Moon, Sun, Monitor, Trash2, Plus, Database, Download, Upload, FileSpreadsheet, RotateCcw, Smartphone, UserRound, Sparkles } from 'lucide-react';
 import { addCategory, renameCategory, recolorCategory, removeCategory } from '../lib/categories.js';
 import { notificationsSupported, showSystemNotification } from '../hooks/useReminders.js';
 import { ui, SectionTitle } from '../components/ui.jsx';
@@ -92,7 +92,8 @@ function CategoryList({ title, type, list, categoryOp, showToast }) {
   );
 }
 
-export default function SettingsView({ prefs, setPrefs, settings, categoryOp, showToast, onExportJSON, onExportCSV, onImportFile, onSimulateDay, install }) {
+export default function SettingsView({ prefs, setPrefs, settings, categoryOp, showToast, onExportJSON, onExportCSV, onImportFile, onSimulateDay, install, onShowWelcome, onClearAll }) {
+  const [confirmClear, setConfirmClear] = useState(false);
   const fileRef = useRef(null);
   const supported = notificationsSupported();
   const [permission, setPermission] = useState(() => (supported ? Notification.permission : 'unsupported'));
@@ -124,6 +125,23 @@ export default function SettingsView({ prefs, setPrefs, settings, categoryOp, sh
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold">Ajustes</h2>
+
+      <div className={`${ui.card} p-6 space-y-4`}>
+        <SectionTitle icon={UserRound} sub="Se usa para saludarte en el Resumen. Se guarda en este dispositivo.">Tú</SectionTitle>
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+          <label className="block flex-1 max-w-sm">
+            <span className={ui.label}>Nombre</span>
+            <input
+              type="text" value={prefs.name} maxLength={40} placeholder="Tu nombre" autoComplete="given-name"
+              onChange={(e) => setPrefs((p) => ({ ...p, name: e.target.value }))}
+              className={ui.input}
+            />
+          </label>
+          <button onClick={onShowWelcome} className={`${ui.link} sm:mb-3`}>
+            <Sparkles className="w-3.5 h-3.5" /> Ver el recorrido de bienvenida
+          </button>
+        </div>
+      </div>
 
       <div className={`${ui.card} p-6 space-y-4`}>
         <SectionTitle icon={Palette} sub="Se guarda en este dispositivo.">Tema</SectionTitle>
@@ -225,6 +243,30 @@ export default function SettingsView({ prefs, setPrefs, settings, categoryOp, sh
           <button onClick={onSimulateDay} className={ui.link} title="Archiva el día actual y empieza el siguiente">
             <RotateCcw className="w-3.5 h-3.5" /> Simular nuevo día
           </button>
+        </div>
+
+        <div className="border-t border-slate-800 pt-4">
+          {confirmClear ? (
+            <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-4" role="alertdialog" aria-label="Confirmar borrar todo">
+              <p className="text-sm text-slate-100 font-medium">¿Borrar tareas, movimientos y hábitos?</p>
+              <p className="text-xs text-slate-400 mt-1">Las categorías y tus ajustes se conservan. Podrás deshacerlo justo después.</p>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => { onClearAll(); setConfirmClear(false); }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white"
+                >
+                  Sí, borrar todo
+                </button>
+                <button onClick={() => setConfirmClear(false)} className="px-3 py-1.5 rounded-lg text-xs bg-slate-700 text-slate-200 hover:bg-slate-600">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmClear(true)} className="text-xs text-rose-400 hover:underline flex items-center gap-1">
+              <Trash2 className="w-3.5 h-3.5" /> Borrar todos los datos y empezar de cero
+            </button>
+          )}
         </div>
       </div>
     </div>

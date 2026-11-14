@@ -10,6 +10,7 @@ import { ruleStartMonth, describeRule } from '../lib/recurringTx.js';
 import { matchesQuery } from '../lib/text.js';
 import { ui, money, EditActions, Field, SectionTitle } from '../components/ui.jsx';
 import { MonthlyTrend } from '../components/TrendCharts.jsx';
+import { EmptyWallet, EmptySearch } from '../components/Illustrations.jsx';
 import { monthlySeries } from '../lib/trends.js';
 
 function TypeToggle({ value, onChange }) {
@@ -444,7 +445,11 @@ export default function FinancesView({
           </div>
         </div>
         {shownTx.length === 0 ? (
-          <p className="text-sm text-slate-500 py-6 text-center">{query ? 'Ningún movimiento coincide con la búsqueda.' : 'No hay movimientos en este periodo.'}</p>
+          <div className="flex flex-col items-center text-center py-8">
+            {query ? <EmptySearch /> : <EmptyWallet />}
+            <p className="text-sm text-slate-300 mt-3">{query ? 'Ningún movimiento coincide con la búsqueda.' : 'No hay movimientos en este periodo.'}</p>
+            {!query && <p className="text-xs text-slate-500 mt-1">Registra uno arriba o escribe, por ejemplo, "Comida $180".</p>}
+          </div>
         ) : (
           <div className="space-y-2">
             {shownTx.map((tr) => (editingId === tr.id ? (

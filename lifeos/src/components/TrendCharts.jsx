@@ -199,7 +199,11 @@ export function HabitHeatmap({ calendar }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
         <p className="text-xs text-slate-400 min-h-4" aria-live="polite">
-          {hover ? describe(hover) : `${perfect} ${perfect === 1 ? 'día' : 'días'} con todos los hábitos en ${registered.length} registrados`}
+          {hover
+            ? describe(hover)
+            : registered.length <= 1
+              ? 'Cada día que cierres aparecerá aquí, más intenso cuantos más hábitos cumplas.'
+              : `${perfect} ${perfect === 1 ? 'día' : 'días'} con todos los hábitos en ${registered.length} registrados`}
         </p>
         <div className="flex items-center gap-1.5 text-[11px] text-slate-500" aria-hidden="true">
           Ninguno

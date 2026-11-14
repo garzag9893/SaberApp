@@ -60,7 +60,27 @@ export const defaultPrefs = () => ({
   theme: 'dark',
   reminders: { enabled: false, minutesBefore: 10 },
   simOffset: 0,
+  name: '',
+  onboarded: false,
 });
+
+// Datos para "empezar desde cero": sin tareas, movimientos ni hábitos; categorías predeterminadas.
+export const emptyData = () => sanitizeData({
+  tasks: [],
+  transactions: [],
+  health: { ...defaultHealth(), water: 0, sleepHours: null, mood: null, habits: [], dailyLogs: [] },
+  budgets: {},
+  settings: defaultSettings(),
+});
+
+// ¿Ya hay datos guardados de LifeOS (de esta versión o de la anterior)?
+export const hasStoredData = () => {
+  try {
+    return ['lifeos_data_v6', 'lifeos_tasks_v5', 'lifeos_finances_v5', 'lifeos_health_v5'].some((k) => localStorage.getItem(k) !== null);
+  } catch {
+    return false;
+  }
+};
 
 // --- Validación: datos corruptos, respaldos ajenos o versiones anteriores no deben tumbar la app ---
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -258,7 +278,8 @@ export const saveData = (data) => writeJSON(DATA_KEY, data);
 export const loadPrefs = () => {
   const base = defaultPrefs();
   const saved = readJSON(PREFS_KEY);
-  if (!isObj(saved)) return base;
+  // Quien ya usaba LifeOS no ve la bienvenida.
+  if (!isObj(saved)) return { ...base, onboarded: hasStoredData() };
   return {
     theme: ['dark', 'light', 'system'].includes(saved.theme) ? saved.theme : base.theme,
     reminders: {
@@ -266,6 +287,8 @@ export const loadPrefs = () => {
       minutesBefore: [0, 5, 10, 15, 30, 60].includes(saved.reminders?.minutesBefore) ? saved.reminders.minutesBefore : 10,
     },
     simOffset: Math.max(0, Math.trunc(Number(saved.simOffset)) || 0),
+    name: typeof saved.name === 'string' ? saved.name.slice(0, 40) : '',
+    onboarded: typeof saved.onboarded === 'boolean' ? saved.onboarded : hasStoredData(),
   };
 };
 

@@ -5,6 +5,7 @@ import { monthOf, filterByMonth, summarize, budgetStatus } from '../lib/finance.
 import { categoryColor } from '../lib/categories.js';
 import { useNowMinutes } from '../hooks/useNow.js';
 import DayDial from '../components/DayDial.jsx';
+import { EmptyCalendar } from '../components/Illustrations.jsx';
 import { ui, money } from '../components/ui.jsx';
 
 function Stat({ label, value, total, onClick, tone = 'bg-indigo-400' }) {
@@ -22,7 +23,10 @@ function Stat({ label, value, total, onClick, tone = 'bg-indigo-400' }) {
   );
 }
 
-export default function DashboardView({ data, todayKey, onNavigate, onToggleTask }) {
+// Saludo según la hora real del dispositivo.
+const greeting = (hour) => (hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches');
+
+export default function DashboardView({ data, todayKey, name = '', onNavigate, onToggleTask }) {
   const { tasks, transactions, health, budgets, settings } = data;
   const nowMinutes = useNowMinutes();
   // La manecilla del ahora solo tiene sentido si el día mostrado es el real (no una simulación).
@@ -61,7 +65,10 @@ export default function DashboardView({ data, todayKey, onNavigate, onToggleTask
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.2em] font-semibold text-amber-400">{weekday}</p>
           <h2 className="font-display text-4xl md:text-5xl font-bold text-slate-50 leading-[1.02] mt-1">{dayMonth}</h2>
-          <p className="text-slate-300 mt-4 max-w-prose">{insight}</p>
+          <p className="text-slate-300 mt-4 max-w-prose">
+            <span className="text-slate-50 font-medium">{greeting(Math.floor(nowMinutes / 60))}{name ? `, ${name}` : ''}.</span>{' '}
+            {insight}
+          </p>
           <dl className="grid grid-cols-3 gap-4 sm:gap-6 mt-7 max-w-md">
             <Stat label="Tareas" value={doneToday} total={today.length} onClick={() => onNavigate('agenda')} />
             <Stat label="Hábitos" value={completedHabits} total={health.habits.length} onClick={() => onNavigate('health')} tone="bg-emerald-400" />
@@ -77,7 +84,11 @@ export default function DashboardView({ data, todayKey, onNavigate, onToggleTask
             <button onClick={() => onNavigate('agenda')} className={ui.link}>Abrir agenda <ArrowRight className="w-3.5 h-3.5" /></button>
           </div>
           {today.length === 0 ? (
-            <p className="text-sm text-slate-500 py-6 text-center">Nada agendado. Escribe algo arriba, por ejemplo "Gym 7pm".</p>
+            <div className="flex flex-col items-center text-center py-4">
+              <EmptyCalendar className="w-32 h-24" />
+              <p className="text-sm text-slate-300 mt-2">Nada agendado para hoy.</p>
+              <p className="text-xs text-slate-500 mt-1">Escribe arriba, por ejemplo "Gym 7pm" o "Llamar a mamá mañana".</p>
+            </div>
           ) : (
             <ol className="space-y-1">
               {today.slice(0, 7).map((task) => (

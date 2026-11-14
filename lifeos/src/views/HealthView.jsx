@@ -7,6 +7,9 @@ import { habitStreak, nextHabitId, habitCalendar } from '../lib/habits.js';
 import { HabitHeatmap } from '../components/TrendCharts.jsx';
 import { ui } from '../components/ui.jsx';
 import { SleepChart, EnergyChart } from '../components/MiniCharts.jsx';
+import { EmptySprout } from '../components/Illustrations.jsx';
+
+const HABIT_IDEAS = ['Tomar 8 vasos de agua', 'Leer 20 minutos', 'Caminar 30 minutos', 'Meditar 10 minutos', 'Dormir antes de las 11'];
 
 const MAX_WATER = 15;
 
@@ -18,20 +21,27 @@ function WeeklyCharts({ health }) {
     <div className={`${ui.card} p-6`}>
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1 mb-5">
         <h3 className="font-semibold text-base flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-indigo-400" /> Últimos {days.length} días
+          <BarChart3 className="w-4 h-4 text-indigo-400" /> {days.length > 1 ? `Últimos ${days.length} días` : 'Evolución'}
         </h3>
         <p className="text-xs text-slate-500">Cada día se archiva a medianoche.</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <p className="text-sm font-medium text-slate-200 mb-2 flex items-center gap-2"><Moon className="w-4 h-4 text-indigo-400" /> Sueño</p>
-          <SleepChart days={days} />
+      {days.length < 2 ? (
+        // Con un solo día no hay evolución que mostrar todavía.
+        <p className="text-sm text-slate-400 py-6">
+          Registra hoy tu sueño y tu energía. Mañana empezarás a ver cómo cambian día con día.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <p className="text-sm font-medium text-slate-200 mb-2 flex items-center gap-2"><Moon className="w-4 h-4 text-indigo-400" /> Sueño</p>
+            <SleepChart days={days} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-200 mb-2 flex items-center gap-2"><Activity className="w-4 h-4 text-amber-400" /> Energía</p>
+            <EnergyChart days={days} />
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-medium text-slate-200 mb-2 flex items-center gap-2"><Activity className="w-4 h-4 text-amber-400" /> Energía</p>
-          <EnergyChart days={days} />
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -143,7 +153,7 @@ export default function HealthView({ health, updateHealth, showToast }) {
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold text-base">Hábitos Diarios</h3>
             <div className="flex items-center gap-3">
-              {!editingHabits && <span className="text-xs text-emerald-400 font-medium">{completed}/{health.habits.length} hoy</span>}
+              {!editingHabits && health.habits.length > 0 && <span className="text-xs text-emerald-400 font-medium">{completed}/{health.habits.length} hoy</span>}
               <button onClick={() => (editingHabits ? finishEditing() : setEditingHabits(true))} className={ui.link}>
                 {editingHabits ? <><Check className="w-3.5 h-3.5" /> Listo</> : <><Pencil className="w-3.5 h-3.5" /> Editar</>}
               </button>
@@ -188,7 +198,23 @@ export default function HealthView({ health, updateHealth, showToast }) {
               </form>
             </div>
           ) : health.habits.length === 0 ? (
-            <p className="text-sm text-slate-500 py-6 text-center">No tienes hábitos. Pulsa Editar para agregar el primero.</p>
+            <div className="flex flex-col items-center text-center py-4">
+              <EmptySprout />
+              <p className="text-sm text-slate-300 mt-2">Aún no tienes hábitos. Empieza con uno pequeño:</p>
+              <div className="flex flex-wrap justify-center gap-2 mt-3">
+                {HABIT_IDEAS.map((idea) => (
+                  <button
+                    key={idea}
+                    type="button"
+                    onClick={() => setHabits((list) => [...list, { id: nextHabitId(list), name: idea, done: false }])}
+                    className="text-xs px-3 py-1.5 rounded-full border border-slate-700 text-slate-300 hover:border-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    + {idea}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setEditingHabits(true)} className={`${ui.link} mt-4`}>O escribe el tuyo</button>
+            </div>
           ) : (
             <div className="space-y-3">
               {health.habits.map((habit) => {

@@ -7,6 +7,7 @@ import FinancesView from './views/FinancesView.jsx';
 import HealthView from './views/HealthView.jsx';
 import AgendaView from './views/AgendaView.jsx';
 import SettingsView from './views/SettingsView.jsx';
+import WelcomeView from './views/WelcomeView.jsx';
 import { useToast } from './hooks/useToast.js';
 import { useLifeData } from './hooks/useLifeData.js';
 import { useCloudSync } from './hooks/useCloudSync.js';
@@ -18,7 +19,7 @@ import { rollDay } from './lib/habits.js';
 import { parseQuickAdd } from './lib/quickAdd.js';
 import { categoryNames } from './lib/categories.js';
 import { REPEAT_LABEL } from './lib/recurrence.js';
-import { loadPrefs, savePrefs } from './lib/storage.js';
+import { loadPrefs, savePrefs, emptyData } from './lib/storage.js';
 import { money } from './components/ui.jsx';
 
 const MAX_WATER = 15;
@@ -132,12 +133,13 @@ export default function LifeOSApp() {
     showToast('📊 Reporte financiero (.CSV) exportado');
   };
 
-  const importFile = (file) => {
+  const importFile = (file, onSuccess) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         if (!store.importData(JSON.parse(event.target.result))) throw new Error('Respaldo sin datos reconocibles');
         showToast('✅ Datos restaurados exitosamente');
+        onSuccess?.();
       } catch {
         showToast('❌ Error: Archivo de respaldo inválido');
       }
@@ -145,6 +147,38 @@ export default function LifeOSApp() {
     reader.onerror = () => showToast('❌ Error: No se pudo leer el archivo');
     reader.readAsText(file);
   };
+
+  // --- BIENVENIDA ---
+  const [showWelcome, setShowWelcome] = useState(() => !prefs.onboarded);
+  const finishWelcome = ({ name, start }) => {
+    if (start === 'empty') store.replaceAll(emptyData());
+    setPrefs((p) => ({ ...p, onboarded: true, name }));
+    setShowWelcome(false);
+    setActiveTab('dashboard');
+    window.scrollTo(0, 0);
+  };
+
+  // --- BORRAR TODO (con deshacer) ---
+  const clearAll = () => {
+    const previous = store.replaceAll(emptyData());
+    showToast('🗑️ Se borraron tareas, movimientos y hábitos', { label: 'Deshacer', onClick: () => store.replaceAll(previous) });
+  };
+
+  if (showWelcome) {
+    return (
+      <>
+        <Toast toast={toast} onDismiss={dismissToast} />
+        <WelcomeView
+          todayKey={todayKey}
+          categories={{ expense: categoryNames(data.settings, 'expense'), income: categoryNames(data.settings, 'income') }}
+          initialName={prefs.name}
+          revisit={prefs.onboarded}
+          onFinish={finishWelcome}
+          onImportFile={importFile}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col md:flex-row">
@@ -168,7 +202,7 @@ export default function LifeOSApp() {
         <QuickAddBar onSubmit={handleQuickAdd} />
 
         {activeTab === 'dashboard' && (
-          <DashboardView data={data} todayKey={todayKey} onNavigate={setActiveTab} onToggleTask={store.toggleTask} />
+          <DashboardView data={data} todayKey={todayKey} name={prefs.name} onNavigate={setActiveTab} onToggleTask={store.toggleTask} />
         )}
         {activeTab === 'finances' && (
           <FinancesView
@@ -209,6 +243,8 @@ export default function LifeOSApp() {
             onImportFile={importFile}
             onSimulateDay={() => setPrefs((p) => ({ ...p, simOffset: p.simOffset + 1 }))}
             install={install}
+            onShowWelcome={() => setShowWelcome(true)}
+            onClearAll={clearAll}
           />
         )}
       </main>

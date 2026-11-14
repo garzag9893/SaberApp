@@ -8,6 +8,7 @@ import { isOverdue, todayTasks, findConflicts, formatTimeRange } from '../lib/ag
 import { REPEAT_OPTIONS, REPEAT_LABEL } from '../lib/recurrence.js';
 import { matchesQuery } from '../lib/text.js';
 import { ui, PRIORITY, EditActions, Field } from '../components/ui.jsx';
+import { EmptyCalendar, EmptySearch } from '../components/Illustrations.jsx';
 
 const emptyForm = (date) => ({ title: '', date, time: '', endTime: '', priority: 'medium', repeat: 'none' });
 
@@ -344,9 +345,9 @@ export default function AgendaView({ tasks, todayKey, onAdd, onUpdate, onToggle,
                 : `${list.filter((t) => t.completed).length} de ${list.length} completadas`}
             </p>
             {list.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-10 h-10 text-slate-700 mx-auto mb-2" />
-                <p className="text-sm text-slate-400">{searching ? 'Ninguna tarea coincide con la búsqueda.' : 'No hay tareas programadas para esta vista.'}</p>
+              <div className="flex flex-col items-center text-center py-10">
+                {searching ? <EmptySearch /> : <EmptyCalendar />}
+                <p className="text-sm text-slate-300 mt-3">{searching ? 'Ninguna tarea coincide con la búsqueda.' : 'No hay tareas programadas para esta vista.'}</p>
                 {!searching && <p className="text-xs text-slate-500 mt-1">Usa el formulario de arriba o la entrada rápida para agendar.</p>}
               </div>
             ) : (
