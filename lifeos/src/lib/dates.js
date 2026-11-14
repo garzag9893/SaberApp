@@ -73,3 +73,15 @@ export const isValidDateParts = (y, m, d) => {
 export const makeKey = (y, m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
 export const weekdayOf = (dateStr) => fromKey(dateStr).getDay();
+
+// Lunes de la semana que contiene la fecha.
+export const startOfWeek = (dateStr) => addDaysToKey(dateStr, -((weekdayOf(dateStr) + 6) % 7));
+
+export const isTime = (value) => typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+
+export const timeToMinutes = (value) => {
+  const [h, m] = value.split(':').map(Number);
+  return h * 60 + m;
+};
+
+export const daysInMonth = (year, month) => new Date(year, month, 0).getDate();

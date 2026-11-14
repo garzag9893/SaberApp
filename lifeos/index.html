@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#020617" />
     <title>LifeOS</title>
+    <script>
+      // Aplica el tema guardado antes de pintar la página, para evitar un destello oscuro.
+      try {
+        var t = (JSON.parse(localStorage.getItem('lifeos_prefs_v6')) || {}).theme;
+        if (t === 'light' || (t === 'system' && matchMedia('(prefers-color-scheme: light)').matches)) {
+          document.documentElement.classList.add('light');
+        }
+      } catch (e) {}
+    </script>
     <meta name="description" content="Agenda, finanzas, salud y hábitos en una sola app." />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />

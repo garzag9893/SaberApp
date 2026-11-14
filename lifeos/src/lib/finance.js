@@ -1,7 +1,5 @@
 // Cálculos de finanzas: filtro por mes, totales y presupuestos.
 
-export const EXPENSE_CATEGORIES = ['Alimentación', 'Transporte', 'Salud', 'Ocio', 'General'];
-
 const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 export const monthOf = (dateStr) => (dateStr || '').slice(0, 7);

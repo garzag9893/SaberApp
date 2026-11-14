@@ -31,6 +31,9 @@ describe('hábitos', () => {
     expect(next.dailyLogs[0]).toMatchObject({ date: '2026-11-14', habitsDone: 1, habitsDoneIds: [1] });
     expect(next.habits.every(h => !h.done)).toBe(true);
     expect(next.water).toBe(0);
+    expect(next.sleepHours).toBeNull();
+    expect(next.mood).toBeNull();
+    expect(next.dailyLogs[0]).toMatchObject({ sleep: 7, mood: 4 });
     expect(habitStreak({ id: 1, done: false }, next)).toBe(3);
   });
 

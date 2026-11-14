@@ -1,6 +1,46 @@
 @import "tailwindcss";
 
-/* Los controles nativos de fecha y hora usan el esquema oscuro. */
+/* Los controles nativos de fecha y hora usan el esquema del tema. */
 :root {
   color-scheme: dark;
+}
+
+/*
+ * Tema claro: la interfaz usa la escala "slate" de Tailwind para fondos y textos.
+ * En modo claro esa escala se invierte y los tonos de acento claros (300/400),
+ * pensados para fondo oscuro, se oscurecen para mantener el contraste.
+ */
+:root.light {
+  color-scheme: light;
+
+  --color-slate-950: oklch(96.8% 0.007 247.896);   /* fondo de la página */
+  --color-slate-900: oklch(100% 0 0);              /* tarjetas */
+  --color-slate-800: oklch(92.9% 0.013 255.508);   /* filas y bordes */
+  --color-slate-700: oklch(86.9% 0.022 252.894);
+  --color-slate-600: oklch(70.4% 0.04 256.788);
+  --color-slate-500: oklch(55.4% 0.046 257.417);
+  --color-slate-400: oklch(44.6% 0.043 257.281);
+  --color-slate-300: oklch(37.2% 0.044 257.287);
+  --color-slate-200: oklch(27.9% 0.041 260.031);
+  --color-slate-100: oklch(20.8% 0.042 265.755);   /* texto principal */
+  --color-slate-50: oklch(12.9% 0.042 264.695);
+
+  --color-indigo-950: oklch(96.2% 0.018 272.314);
+  --color-indigo-400: oklch(51.1% 0.262 276.966);
+  --color-indigo-300: oklch(45.7% 0.24 277.023);
+  --color-indigo-200: oklch(39.8% 0.195 277.366);
+  --color-emerald-400: oklch(59.6% 0.145 163.225);
+  --color-emerald-300: oklch(50.8% 0.118 165.612);
+  --color-rose-400: oklch(58.6% 0.253 17.585);
+  --color-rose-300: oklch(51.4% 0.222 16.935);
+  --color-amber-400: oklch(66.6% 0.179 58.318);
+  --color-amber-300: oklch(55.5% 0.163 48.998);
+  --color-amber-200: oklch(47.3% 0.137 46.201);
+  --color-sky-400: oklch(58.8% 0.158 241.966);
+  --color-sky-300: oklch(50% 0.134 242.749);
+}
+
+/* El logo conserva sus letras oscuras sobre el degradado en ambos temas. */
+:root.light .light-keep-dark {
+  color: oklch(12.9% 0.042 264.695);
 }

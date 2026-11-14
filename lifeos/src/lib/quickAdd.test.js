@@ -7,7 +7,7 @@ const TODAY = '2026-01-31';
 describe('parseQuickAdd', () => {
   it('agenda para mañana con hora 24h', () => {
     expect(parseQuickAdd('Dentista mañana 16:00', TODAY)).toEqual({
-      kind: 'task', title: 'Dentista', date: '2026-02-01', time: '16:00',
+      kind: 'task', title: 'Dentista', date: '2026-02-01', time: '16:00', repeat: 'none', repeatAnchor: null,
     });
   });
 
@@ -108,6 +108,48 @@ describe('parseQuickAdd: fechas', () => {
 
   it('"hoy" se quita del título', () => {
     expect(parseQuickAdd('Llamar a mamá hoy 6pm', TODAY)).toMatchObject({ title: 'Llamar a mamá', date: TODAY, time: '18:00' });
+  });
+});
+
+describe('parseQuickAdd: repetición', () => {
+  it('todos los días', () => {
+    expect(parseQuickAdd('Tomar vitaminas todos los días 8am', TODAY)).toMatchObject({ title: 'Tomar vitaminas', date: TODAY, time: '08:00', repeat: 'daily' });
+    expect(parseQuickAdd('Correr diario', TODAY).repeat).toBe('daily');
+  });
+
+  it('entre semana empieza el lunes si hoy es fin de semana', () => {
+    expect(parseQuickAdd('Revisar correo entre semana 9:00', TODAY)).toMatchObject({ title: 'Revisar correo', date: '2026-02-02', repeat: 'weekdays' });
+  });
+
+  it('cada lunes / los sábados', () => {
+    expect(parseQuickAdd('Junta de equipo cada lunes 10:00', TODAY)).toMatchObject({ title: 'Junta de equipo', date: '2026-02-02', repeat: 'weekly' });
+    expect(parseQuickAdd('Mercado todos los sábados', TODAY)).toMatchObject({ title: 'Mercado', date: TODAY, repeat: 'weekly' });
+    expect(parseQuickAdd('Misa cada domingo', TODAY).date).toBe('2026-02-01');
+  });
+
+  it('el día 15 de cada mes', () => {
+    expect(parseQuickAdd('Pagar renta el día 15 de cada mes', TODAY)).toMatchObject({ title: 'Pagar renta', date: '2026-02-15', repeat: 'monthly', repeatAnchor: 15 });
+  });
+
+  it('cada mes con fecha', () => {
+    expect(parseQuickAdd('Corte de pelo cada mes el viernes', TODAY)).toMatchObject({ title: 'Corte de pelo', date: '2026-02-06', repeat: 'monthly', repeatAnchor: 6 });
+  });
+
+  it('"cada mañana" no es el día siguiente ni repetición', () => {
+    expect(parseQuickAdd('Estirar cada mañana', TODAY)).toMatchObject({ date: TODAY, repeat: 'none' });
+  });
+});
+
+describe('parseQuickAdd: categorías del usuario', () => {
+  const categories = { expense: ['Comida', 'Mascotas', 'General'], income: ['Honorarios'] };
+  it('usa la categoría propia que aparece en el texto', () => {
+    expect(parseQuickAdd('Croquetas mascotas $450', TODAY, { categories }).category).toBe('Mascotas');
+  });
+  it('si la sugerencia no existe, usa General', () => {
+    expect(parseQuickAdd('Uber $90', TODAY, { categories }).category).toBe('General');
+  });
+  it('ingresos van a la primera categoría de ingreso', () => {
+    expect(parseQuickAdd('Cobro cliente $5000', TODAY, { categories }).category).toBe('Honorarios');
   });
 });
 

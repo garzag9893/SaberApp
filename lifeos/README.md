@@ -4,25 +4,45 @@ Panel personal para organizar el día: agenda, finanzas, salud y hábitos en una
 
 ## Funciones
 
-- **Agenda avanzada**: pestañas Hoy / Mañana / Todas, selector de calendario, orden cronológico automático (las tareas sin hora van al final), edición en línea y prioridades. Las tareas pendientes de días anteriores siguen en "Hoy" marcadas como atrasadas.
+- **Agenda avanzada**
+  - Pestañas Hoy / Mañana / Semana / Todas y selector de calendario.
+  - Orden cronológico automático; las tareas sin hora van al final.
+  - Hora de inicio y de fin, con aviso cuando dos tareas chocan.
+  - Tareas que se repiten: diaria, lunes a viernes, semanal o mensual. Al completarla se crea la siguiente.
+  - Las tareas pendientes de días anteriores siguen en "Hoy" marcadas como atrasadas.
+  - Vista semanal tipo calendario y buscador en todas las tareas.
 - **Entrada rápida**: una sola barra que entiende tareas, gastos y agua.
   - `Dentista mañana 16:00`, `Junta 4:30 pm`, `Entrega pasado mañana 9:00`
-  - `Junta el viernes 10:00`, `Revisar contrato en 3 días`, `Vacuna en 2 semanas`
-  - `Posada 15 de diciembre 8pm`, `Pagar tarjeta 15/02`
-  - `Comida $180`, `Ingreso freelance $3,000`
+  - `Junta el viernes 10:00`, `Revisar contrato en 3 días`, `Posada 15 de diciembre 8pm`, `Pagar tarjeta 15/02`
+  - `Gym cada lunes 7am`, `Vitaminas todos los días 8:00`, `Revisar correo entre semana`, `Pagar renta el día 15 de cada mes`
+  - `Comida $180`, `Ingreso freelance $3,000`, `Croquetas mascotas $450` (usa tus propias categorías)
   - `Tomar agua`, `2 vasos de agua`
-- **Finanzas**: vista por mes o de todo el historial, edición de movimientos, presupuestos mensuales por categoría con avisos al 80 % y al excederse, y exportación a CSV compatible con Excel.
-- **Salud y hábitos**: hábitos editables (agregar, renombrar, eliminar) con rachas de días seguidos, meta de agua ajustable, sueño y energía, con archivo automático al cambiar de día.
+- **Finanzas**
+  - Vista por mes o de todo el historial, con buscador.
+  - Edición de movimientos y categorías de ingreso.
+  - Presupuestos mensuales por categoría, con avisos al 80 % y al excederse.
+  - Gastos e ingresos fijos (renta, suscripciones, sueldo) que se registran solos cada mes.
+  - Exportación a CSV compatible con Excel.
+- **Salud y hábitos**
+  - Hábitos editables con rachas de días seguidos.
+  - Meta de agua ajustable.
+  - Sueño y energía se registran de nuevo cada día; el historial guarda cada día cerrado.
+- **Ajustes**
+  - Tema oscuro, claro o según el dispositivo.
+  - Recordatorios antes de cada tarea.
+  - Categorías de gastos e ingresos editables: nombre y color. Al renombrar o eliminar se actualizan movimientos, presupuestos y gastos fijos.
 - **Deshacer**: al borrar una tarea, un movimiento o un hábito aparece un botón para recuperarlo.
 - **Instalable**: se puede instalar como app en el celular o la computadora y abrir sin conexión.
-- **Respaldo**: exportar e importar todos los datos en JSON (incluye presupuestos).
+- **Respaldo**: exportar e importar todos los datos en JSON.
+
+Los datos de la versión 5 se migran automáticamente la primera vez que se abre esta versión.
 
 ## Uso
 
 ```bash
 npm install
 npm run dev      # servidor de desarrollo
-npm test         # pruebas de entrada rápida, fechas, finanzas y hábitos
+npm test         # pruebas de la lógica (entrada rápida, fechas, finanzas, hábitos, repetición, sincronización…)
 npm run build    # versión de producción en dist/
 ```
 
@@ -52,21 +72,22 @@ create policy "Cada usuario solo ve y modifica su fila"
 Cómo funciona:
 
 - Cada persona inicia sesión y solo puede leer y escribir su propia fila. La clave anónima por sí sola no da acceso a los datos de nadie.
-- Al entrar, al volver a la pestaña y al recuperar la conexión, la app descarga los datos de la nube si son más recientes que los locales; cada cambio local se sube un segundo después.
-- Si dos dispositivos editan a la vez, gana el cambio más reciente completo (no se mezclan cambios tarea por tarea).
+- Al entrar, al volver a la pestaña, al recuperar la conexión y después de cada cambio, la app descarga lo de la nube, lo **combina** con lo local y sube el resultado.
+- Tareas y movimientos se combinan uno por uno: si en el celular agregas una tarea y en la computadora otra, se conservan las dos. Si el mismo elemento se editó en dos lugares, gana la edición más reciente. Lo que borras en un dispositivo se borra también en los demás.
+- Salud, presupuestos y ajustes se guardan como un bloque: gana el bloque editado más recientemente.
 
 ## Estructura
 
 ```
+.github/workflows/   pruebas automáticas (ci.yml) y publicación en GitHub Pages (pages.yml)
 public/              manifiesto, iconos y service worker (app instalable)
 src/
-  App.jsx            interfaz y estado
-  lib/dates.js       fechas, normalización de hora y orden cronológico
-  lib/quickAdd.js    intérprete de la entrada rápida
-  lib/storage.js     datos iniciales, validación y localStorage
-  lib/finance.js     filtro por mes, totales y presupuestos
-  lib/habits.js      cierre del día y rachas de hábitos
-  lib/cloud.js       inicio de sesión y sincronización con Supabase
+  App.jsx            une las piezas: estado global, cambio de día, entrada rápida y respaldos
+  components/        barra lateral, entrada rápida, avisos y estilos compartidos
+  views/             una vista por sección: Resumen, Finanzas, Salud, Agenda y Ajustes
+  hooks/             datos (useLifeData), nube, recordatorios, tema e instalación
+  lib/               lógica sin interfaz, con pruebas: fechas, entrada rápida, agenda, repetición,
+                     finanzas, categorías, gastos fijos, hábitos, almacenamiento y fusión de datos
 ```
 
 ## Instalar como app
@@ -77,3 +98,17 @@ La versión de producción (`npm run build`, servida por HTTPS) se puede instala
 - **iPhone / Safari**: Compartir → "Agregar a pantalla de inicio".
 
 Una vez abierta por primera vez, funciona sin conexión; los cambios se sincronizan con la nube al recuperar la red.
+
+## Recordatorios
+
+Se activan en **Ajustes → Recordatorios**. Avisan antes de cada tarea con hora del día, dentro de la app y con notificación del sistema si el navegador lo permite.
+
+Funcionan mientras LifeOS está abierta, también instalada como app y en segundo plano. Con la app cerrada por completo el navegador no puede avisar; para eso haría falta un servidor de notificaciones push.
+
+## Publicar en GitHub Pages
+
+El repositorio incluye `.github/workflows/pages.yml`. GitHub solo lo ejecuta cuando la carpeta `.github` está en la raíz del repositorio, es decir, cuando LifeOS vive en su propio repositorio.
+
+1. En el repositorio: **Settings → Pages → Source: GitHub Actions**.
+2. Opcional, para la nube: en **Settings → Secrets and variables → Actions** agrega `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+3. Cada cambio en `main` corre las pruebas y publica la app en `https://<usuario>.github.io/<repositorio>/`.

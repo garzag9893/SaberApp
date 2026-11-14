@@ -1,6 +1,6 @@
 import { addDaysToKey } from './dates.js';
 
-// Cierra el día activo: lo archiva en el historial y reinicia agua y hábitos.
+// Cierra el día activo: lo archiva en el historial y reinicia agua, sueño, energía y hábitos.
 // Guarda qué hábitos se cumplieron para poder calcular rachas.
 export const rollDay = (prev, newDateStr) => {
   if (prev.lastActiveDate === newDateStr) return prev;
@@ -22,6 +22,9 @@ export const rollDay = (prev, newDateStr) => {
     ...prev,
     lastActiveDate: newDateStr,
     water: 0,
+    // Sueño y energía se registran de nuevo cada día.
+    sleepHours: null,
+    mood: null,
     habits: prev.habits.map((h) => ({ ...h, done: false })),
     dailyLogs: [closedDayRecord, ...otherLogs]
       .sort((a, b) => b.date.localeCompare(a.date))
