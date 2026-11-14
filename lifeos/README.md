@@ -6,20 +6,23 @@ Panel personal para organizar el día: agenda, finanzas, salud y hábitos en una
 
 - **Agenda avanzada**: pestañas Hoy / Mañana / Todas, selector de calendario, orden cronológico automático (las tareas sin hora van al final), edición en línea y prioridades. Las tareas pendientes de días anteriores siguen en "Hoy" marcadas como atrasadas.
 - **Entrada rápida**: una sola barra que entiende tareas, gastos y agua.
-  - `Dentista mañana 16:00` → tarea para mañana a las 16:00
-  - `Junta 4:30 pm`, `Entrega pasado mañana 9:00`
+  - `Dentista mañana 16:00`, `Junta 4:30 pm`, `Entrega pasado mañana 9:00`
+  - `Junta el viernes 10:00`, `Revisar contrato en 3 días`, `Vacuna en 2 semanas`
+  - `Posada 15 de diciembre 8pm`, `Pagar tarjeta 15/02`
   - `Comida $180`, `Ingreso freelance $3,000`
   - `Tomar agua`, `2 vasos de agua`
-- **Finanzas**: ingresos, gastos, distribución por categoría y exportación a CSV compatible con Excel.
-- **Salud y hábitos**: agua, sueño, energía y hábitos, con archivo automático al cambiar de día.
-- **Respaldo**: exportar e importar todos los datos en JSON.
+- **Finanzas**: vista por mes o de todo el historial, edición de movimientos, presupuestos mensuales por categoría con avisos al 80 % y al excederse, y exportación a CSV compatible con Excel.
+- **Salud y hábitos**: hábitos editables (agregar, renombrar, eliminar) con rachas de días seguidos, meta de agua ajustable, sueño y energía, con archivo automático al cambiar de día.
+- **Deshacer**: al borrar una tarea, un movimiento o un hábito aparece un botón para recuperarlo.
+- **Instalable**: se puede instalar como app en el celular o la computadora y abrir sin conexión.
+- **Respaldo**: exportar e importar todos los datos en JSON (incluye presupuestos).
 
 ## Uso
 
 ```bash
 npm install
 npm run dev      # servidor de desarrollo
-npm test         # pruebas del intérprete de entrada rápida y de fechas
+npm test         # pruebas de entrada rápida, fechas, finanzas y hábitos
 npm run build    # versión de producción en dist/
 ```
 
@@ -55,10 +58,22 @@ Cómo funciona:
 ## Estructura
 
 ```
+public/              manifiesto, iconos y service worker (app instalable)
 src/
   App.jsx            interfaz y estado
   lib/dates.js       fechas, normalización de hora y orden cronológico
   lib/quickAdd.js    intérprete de la entrada rápida
   lib/storage.js     datos iniciales, validación y localStorage
+  lib/finance.js     filtro por mes, totales y presupuestos
+  lib/habits.js      cierre del día y rachas de hábitos
   lib/cloud.js       inicio de sesión y sincronización con Supabase
 ```
+
+## Instalar como app
+
+La versión de producción (`npm run build`, servida por HTTPS) se puede instalar:
+
+- **Android / Chrome**: botón "Instalar como app" en la barra lateral o el menú del navegador.
+- **iPhone / Safari**: Compartir → "Agregar a pantalla de inicio".
+
+Una vez abierta por primera vez, funciona sin conexión; los cambios se sincronizan con la nube al recuperar la red.

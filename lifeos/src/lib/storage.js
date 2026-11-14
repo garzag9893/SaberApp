@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   transactions: 'lifeos_finances_v5',
   health: 'lifeos_health_v5',
   updatedAt: 'lifeos_updated_v5',
+  budgets: 'lifeos_budgets_v5',
 };
 
 export const defaultTasks = () => [

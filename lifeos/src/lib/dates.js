@@ -57,3 +57,19 @@ export const sortTasksChronologically = (taskList, fallbackDate) =>
     const timeB = b.time && b.time !== 'Sin hora' ? b.time : '99:99';
     return timeA.localeCompare(timeB);
   });
+
+// Días de diferencia entre dos claves 'YYYY-MM-DD' (positivo si `to` es posterior).
+export const dayDiff = (from, to) => {
+  const [y1, m1, d1] = from.split('-').map(Number);
+  const [y2, m2, d2] = to.split('-').map(Number);
+  return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86_400_000);
+};
+
+export const isValidDateParts = (y, m, d) => {
+  const date = new Date(y, m - 1, d);
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
+};
+
+export const makeKey = (y, m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+export const weekdayOf = (dateStr) => fromKey(dateStr).getDay();

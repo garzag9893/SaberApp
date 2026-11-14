@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { parseQuickAdd } from './quickAdd.js';
-import { normalizeTime, addDaysToKey, sortTasksChronologically } from './dates.js';
+import { normalizeTime, addDaysToKey, sortTasksChronologically, dayDiff } from './dates.js';
 
 const TODAY = '2026-01-31';
 
 describe('parseQuickAdd', () => {
   it('agenda para mañana con hora 24h', () => {
     expect(parseQuickAdd('Dentista mañana 16:00', TODAY)).toEqual({
-      kind: 'task', title: 'Dentista', date: '2026-02-01', time: '16:00', dayOffset: 1,
+      kind: 'task', title: 'Dentista', date: '2026-02-01', time: '16:00',
     });
   });
 
@@ -71,7 +71,52 @@ describe('parseQuickAdd', () => {
   });
 });
 
+// 2026-01-31 es sábado.
+describe('parseQuickAdd: fechas', () => {
+  it('día de la semana: la próxima ocurrencia', () => {
+    expect(parseQuickAdd('Junta el viernes 10:00', TODAY)).toMatchObject({ title: 'Junta', date: '2026-02-06', time: '10:00' });
+    expect(parseQuickAdd('Mercado el lunes', TODAY).date).toBe('2026-02-02');
+    expect(parseQuickAdd('Correr miércoles', TODAY).date).toBe('2026-02-04');
+  });
+
+  it('el mismo día de la semana es la semana siguiente', () => {
+    expect(parseQuickAdd('Limpieza el sábado', TODAY).date).toBe('2026-02-07');
+  });
+
+  it('"el lunes por la mañana" es el lunes, no mañana', () => {
+    const r = parseQuickAdd('Gym el lunes por la mañana', TODAY);
+    expect(r.date).toBe('2026-02-02');
+    expect(r.title).toBe('Gym por la mañana');
+  });
+
+  it('"en N días" y "en una semana"', () => {
+    expect(parseQuickAdd('Revisar en 3 días', TODAY)).toMatchObject({ title: 'Revisar', date: '2026-02-03' });
+    expect(parseQuickAdd('Seguimiento en una semana', TODAY).date).toBe('2026-02-07');
+    expect(parseQuickAdd('Vacuna en 2 semanas', TODAY).date).toBe('2026-02-14');
+  });
+
+  it('fecha con nombre de mes', () => {
+    expect(parseQuickAdd('Cumpleaños de Ana 15 de marzo', TODAY)).toMatchObject({ title: 'Cumpleaños de Ana', date: '2026-03-15' });
+    expect(parseQuickAdd('Aniversario el 10 de enero', TODAY).date).toBe('2027-01-10');
+    expect(parseQuickAdd('Viaje 5 de mayo de 2028', TODAY).date).toBe('2028-05-05');
+  });
+
+  it('fecha corta día/mes', () => {
+    expect(parseQuickAdd('Pagar tarjeta 15/02', TODAY)).toMatchObject({ title: 'Pagar tarjeta', date: '2026-02-15' });
+    expect(parseQuickAdd('Dato 31/02', TODAY)).toMatchObject({ title: 'Dato 31/02', date: TODAY });
+  });
+
+  it('"hoy" se quita del título', () => {
+    expect(parseQuickAdd('Llamar a mamá hoy 6pm', TODAY)).toMatchObject({ title: 'Llamar a mamá', date: TODAY, time: '18:00' });
+  });
+});
+
 describe('fechas', () => {
+  it('dayDiff', () => {
+    expect(dayDiff('2026-01-31', '2026-03-01')).toBe(29);
+    expect(dayDiff('2026-03-01', '2026-01-31')).toBe(-29);
+  });
+
   it('normalizeTime', () => {
     expect(normalizeTime('9:00')).toBe('09:00');
     expect(normalizeTime('12 pm')).toBe('12:00');
