@@ -257,6 +257,38 @@ test('resumen: el dinero dice su estado y el mes en negativo explica qué pasó'
   await expect(dinero).toContainText('Salió $5,699 más de lo que entró. Lo que más pesa: Alimentación, con $3,950.');
 });
 
+test('reloj con teclado: una parada de Tab, flechas, Enter lleva al botón y Esc vuelve', async ({ page }) => {
+  await openApp(page);
+  const arcs = page.locator('svg[role="group"] path[role="button"]');
+  await expect(arcs).toHaveCount(4);
+  await expect(page.locator('svg[role="group"] path[role="button"][tabindex="0"]')).toHaveCount(1);
+
+  // El arco que recibe Tab es el de la siguiente tarea.
+  const stop = page.locator('svg[role="group"] path[role="button"][tabindex="0"]');
+  await stop.focus();
+  await expect(page.locator(':focus')).toHaveAttribute('aria-label', /^Entrenamiento de fuerza/);
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator(':focus')).toHaveAttribute('aria-label', /^Dentista/);
+  await page.keyboard.press('Enter');
+  await expect(page.locator(':focus')).toHaveAccessibleName('Marcar como hecha: Dentista');
+  await expect(page.getByText('Seleccionaste Dentista, 13:15.')).toBeAttached();
+  const box = await page.locator(':focus').boundingBox();
+  expect(box.height).toBeGreaterThanOrEqual(44);
+
+  await page.keyboard.press('Escape');
+  await expect(page.locator(':focus')).toHaveAttribute('aria-label', /^Dentista/);
+  await expect(page.getByRole('button', { name: /Marcar como hecha/ })).toHaveCount(0);
+});
+
+test('cambiar de sección abre desde arriba y lleva el foco al contenido', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await openApp(page);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.getByRole('button', { name: /Abrir agenda/ }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(page.locator('#contenido')).toBeFocused();
+});
+
 test.describe('celular: navegación inferior', () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 

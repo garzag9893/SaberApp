@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Check, Undo2 } from 'lucide-react';
 import { isTime, timeToMinutes } from '../lib/dates.js';
 import { formatTimeRange } from '../lib/agenda.js';
@@ -8,6 +8,8 @@ import { formatTimeRange } from '../lib/agenda.js';
 // un segundo carril, así los choques se ven a simple vista.
 // El centro muestra la siguiente tarea. Tocar un arco (o enfocarlo y pulsar Enter) lo
 // selecciona y permite marcarlo como hecho desde el centro.
+// Teclado: el reloj es una sola parada de Tab; las flechas recorren las tareas en orden,
+// Enter las selecciona y lleva al botón del centro, y Esc quita la selección.
 
 const SIZE = 264; // unidades del dibujo; el tamaño en pantalla lo da CSS
 const MIN_ARC = 25; // minutos: una tarea sin hora de fin se dibuja con este largo
@@ -37,6 +39,11 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
   const [hoverId, setHoverId] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [focusId, setFocusId] = useState(null);
+  const [activeId, setActiveId] = useState(null); // último arco enfocado (tabindex itinerante)
+  const [announce, setAnnounce] = useState('');
+  const arcRefs = useRef({});
+  const buttonRef = useRef(null);
+  const focusButton = useRef(false);
   const cx = SIZE / 2;
   const stroke = 12;
   const outer = cx - 36; // margen para las marcas y los números de las horas
@@ -73,10 +80,54 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
   const when = shown && shown === next && nowMinutes != null && shown.start > nowMinutes ? inMinutes(shown.start - nowMinutes) : null;
 
   const summary = timed.length
-    ? `Reloj del día: ${timed.length} ${timed.length === 1 ? 'tarea' : 'tareas'} con hora${next ? `; la siguiente es ${next.task.title} a las ${next.task.time}` : '; todas hechas'}.`
+    ? `Reloj del día: ${timed.length} ${timed.length === 1 ? 'tarea' : 'tareas'} con hora${next ? `; la siguiente es ${next.task.title} a las ${next.task.time}` : '; todas hechas'}. Usa las flechas para recorrerlas.`
     : 'Reloj del día: hoy no hay tareas con hora.';
 
-  const select = (id) => setSelectedId((cur) => (cur === id ? null : id));
+  // Solo un arco recibe Tab: el último enfocado, el seleccionado, el siguiente o el primero.
+  const has = (id) => timed.some((i) => i.task.id === id);
+  const tabStop = [activeId, selectedId, next?.task.id, timed[0]?.task.id].find((id) => id && has(id));
+
+  const select = (id, { fromKeyboard = false } = {}) => {
+    const item = timed.find((i) => i.task.id === id);
+    const on = selectedId !== id;
+    setSelectedId(on ? id : null);
+    setAnnounce(on && item ? `Seleccionaste ${item.task.title}, ${formatTimeRange(item.task)}${item.task.completed ? ', hecha' : ''}.` : 'Sin tarea seleccionada.');
+    focusButton.current = on && fromKeyboard;
+  };
+  const clear = (returnFocus) => {
+    if (!selectedId) return;
+    const id = selectedId;
+    setSelectedId(null);
+    setAnnounce('Sin tarea seleccionada.');
+    if (returnFocus) arcRefs.current[id]?.focus();
+  };
+
+  // Con teclado, al seleccionar el foco pasa al botón "Marcar como hecha".
+  useEffect(() => {
+    if (focusButton.current && buttonRef.current) {
+      buttonRef.current.focus();
+      focusButton.current = false;
+    }
+  }, [selectedId]);
+
+  const onArcKey = (e, index) => {
+    const move = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    let target = null;
+    if (move) target = timed[(index + move + timed.length) % timed.length];
+    else if (e.key === 'Home') target = timed[0];
+    else if (e.key === 'End') target = timed[timed.length - 1];
+    if (target) {
+      e.preventDefault();
+      arcRefs.current[target.task.id]?.focus();
+      return;
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      select(timed[index].task.id, { fromKeyboard: true });
+    } else if (e.key === 'Escape') {
+      clear(false);
+    }
+  };
 
   return (
     <div className="relative shrink-0 mx-auto aspect-square w-[min(74vw,272px)]">
@@ -109,7 +160,7 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
         )}
 
         {/* Tareas: arco visible + zona táctil invisible y enfocable */}
-        {timed.map((item) => {
+        {timed.map((item, index) => {
           const radius = item.lane ? inner : outer;
           const start = item.start + GAP / 2;
           const end = Math.max(item.end - GAP / 2, start + 4);
@@ -130,21 +181,20 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
                 strokeWidth={HIT}
                 pointerEvents="stroke"
                 className="cursor-pointer outline-none"
-                tabIndex={0}
+                ref={(el) => { arcRefs.current[item.task.id] = el; }}
+                tabIndex={item.task.id === tabStop ? 0 : -1}
                 role="button"
                 aria-pressed={item.task.id === selectedId}
                 aria-label={`${item.task.title}, ${formatTimeRange(item.task)}${item.task.completed ? ', hecha' : ''}`}
                 onClick={() => select(item.task.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    select(item.task.id);
-                  }
-                }}
+                onKeyDown={(e) => onArcKey(e, index)}
                 onMouseEnter={() => setHoverId(item.task.id)}
                 onMouseLeave={() => setHoverId(null)}
                 // Contorno solo con teclado (:focus-visible), no al tocar o hacer clic.
-                onFocus={(e) => setFocusId(e.currentTarget.matches(':focus-visible') ? item.task.id : null)}
+                onFocus={(e) => {
+                  setActiveId(item.task.id);
+                  setFocusId(e.currentTarget.matches(':focus-visible') ? item.task.id : null);
+                }}
                 onBlur={() => setFocusId(null)}
               >
                 <title>{`${formatTimeRange(item.task)} · ${item.task.title}`}</title>
@@ -178,8 +228,11 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
               {selected && shown === selected && onToggleTask && (
                 <button
                   type="button"
+                  ref={buttonRef}
                   onClick={() => onToggleTask(selected.task.id)}
-                  className="pointer-events-auto mt-2 inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold px-3 min-h-9 rounded-full bg-indigo-600 text-white hover:bg-indigo-500"
+                  onKeyDown={(e) => { if (e.key === 'Escape') clear(true); }}
+                  aria-label={`${selected.task.completed ? 'Desmarcar' : 'Marcar como hecha'}: ${selected.task.title}`}
+                  className="pointer-events-auto mt-2 inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold px-3.5 min-h-11 rounded-full bg-indigo-600 text-white hover:bg-indigo-500"
                 >
                   {selected.task.completed
                     ? <><Undo2 className="w-3.5 h-3.5" aria-hidden="true" /> Desmarcar</>
@@ -205,6 +258,8 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
           {untimed > 0 && <p className="text-xs text-slate-400 mt-1.5">+{untimed} sin hora</p>}
         </div>
       </div>
+      {/* Anuncia la selección a los lectores de pantalla (también al tocar) */}
+      <p className="sr-only" aria-live="polite">{announce}</p>
     </div>
   );
 }

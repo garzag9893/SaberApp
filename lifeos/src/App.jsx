@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Sidebar, { BottomNav } from './components/Sidebar.jsx';
 import Toast from './components/Toast.jsx';
 import QuickAddBar from './components/QuickAddBar.jsx';
@@ -44,6 +44,17 @@ export default function LifeOSApp() {
   const todayKey = data.health.lastActiveDate;
 
   const [activeTab, setActiveTab] = useState('dashboard');
+  // Al cambiar de sección: abrir desde arriba y llevar el foco al contenido,
+  // para que teclado y lector de pantalla empiecen en la sección nueva.
+  const firstTab = useRef(true);
+  useEffect(() => {
+    if (firstTab.current) {
+      firstTab.current = false;
+      return;
+    }
+    window.scrollTo(0, 0);
+    document.getElementById('contenido')?.focus({ preventScroll: true });
+  }, [activeTab]);
   const [prefs, setPrefs] = useState(loadPrefs);
   useEffect(() => { savePrefs(prefs); }, [prefs]);
 
