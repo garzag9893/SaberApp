@@ -214,9 +214,14 @@ export default function LifeOSApp() {
             name={prefs.name}
             onNavigate={setActiveTab}
             onToggleTask={store.toggleTask}
-            onMoveToToday={(id) => {
-              store.updateTask(id, { date: todayKey });
-              showToast('📅 Tarea pasada a hoy');
+            onMoveToToday={(ids) => {
+              // Guarda las fechas originales para poder deshacer.
+              const previous = ids.map((id) => [id, data.tasks.find((t) => t.id === id)?.date]);
+              ids.forEach((id) => store.updateTask(id, { date: todayKey }));
+              showToast(ids.length === 1 ? '📅 Tarea movida a hoy' : `📅 ${ids.length} tareas movidas a hoy`, {
+                label: 'Deshacer',
+                onClick: () => previous.forEach(([id, date]) => store.updateTask(id, { date })),
+              });
             }}
             onAddWater={() => {
               updateHealth((prev) => ({ ...prev, water: Math.min(prev.water + 1, MAX_WATER) }));

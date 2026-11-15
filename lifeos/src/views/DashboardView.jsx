@@ -1,6 +1,7 @@
-import { Wallet, CheckCircle2, Circle, Repeat, ArrowRight, Plus, PartyPopper } from 'lucide-react';
-import { formatReadableDate, formatLongDate, getTodayKey, isTime, timeToMinutes } from '../lib/dates.js';
-import { todayTasks, isOverdue, formatTimeRange } from '../lib/agenda.js';
+import { useState } from 'react';
+import { Wallet, CheckCircle2, Circle, Repeat, ArrowRight, Plus, PartyPopper, ChevronDown } from 'lucide-react';
+import { formatReadableDate, formatLongDate, getTodayKey, isTime, timeToMinutes, sortTasksChronologically } from '../lib/dates.js';
+import { isOverdue, formatTimeRange } from '../lib/agenda.js';
 import { monthOf, filterByMonth, summarize, budgetStatus, formatMonth } from '../lib/finance.js';
 import { categoryColor } from '../lib/categories.js';
 import { useNowMinutes } from '../hooks/useNow.js';
@@ -21,10 +22,10 @@ const inTime = (mins) => {
 const signed = (n) => `${n < 0 ? '−' : ''}$${money(Math.abs(n))}`;
 
 // Lo que la persona necesita saber primero al abrir: qué está pasando o qué sigue.
-function headline(today, nowMinutes, todayKey) {
+function headline(today, nowMinutes) {
   const pending = today.filter((t) => !t.completed);
   const timed = pending
-    .filter((t) => isTime(t.time) && (t.date || todayKey) === todayKey)
+    .filter((t) => isTime(t.time))
     .map((t) => {
       const start = timeToMinutes(t.time);
       const end = isTime(t.endTime) && timeToMinutes(t.endTime) > start ? timeToMinutes(t.endTime) : start;
@@ -50,14 +51,62 @@ function headline(today, nowMinutes, todayKey) {
   return { title: 'Día libre', detail: 'Escribe arriba lo que quieras agendar.' };
 }
 
-function Notice({ children, action, onAction, tone = 'text-slate-300' }) {
+const actionClass = 'text-sm font-medium text-right text-indigo-400 hover:text-indigo-300 min-h-11 px-2 -mr-2';
+const rowClass = 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4';
+
+function Notice({ children, action, actionLabel, onAction, tone = 'text-slate-300' }) {
   return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 py-1 border-t border-slate-800 first:border-t-0">
+    <li className={`${rowClass} py-1 border-t border-slate-800 first:border-t-0`}>
       <span className={`text-sm py-2 ${tone}`}>{children}</span>
       {action && (
-        <button type="button" onClick={onAction} className="text-sm font-medium text-right text-indigo-400 hover:text-indigo-300 min-h-11 px-2 -mr-2">
+        <button type="button" onClick={onAction} aria-label={actionLabel} className={actionClass}>
           {action}
         </button>
+      )}
+    </li>
+  );
+}
+
+// Lo atrasado vive en un solo lugar: una fila que se abre, de la más antigua a la más reciente.
+function OverdueNotice({ tasks, onMove }) {
+  const [open, setOpen] = useState(false);
+  if (tasks.length === 1) {
+    const [t] = tasks;
+    return (
+      <Notice action="Mover a hoy" actionLabel={`Mover a hoy: ${t.title}`} onAction={() => onMove([t.id])}>
+        <span className="text-rose-400 font-medium">Atrasada</span> desde el {formatReadableDate(t.date).toLowerCase()}: {t.title}
+      </Notice>
+    );
+  }
+  return (
+    <li className="py-1 border-t border-slate-800 first:border-t-0">
+      <div className={rowClass}>
+        <button
+          type="button" aria-expanded={open} aria-controls="atrasadas" onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-2 text-left text-sm text-slate-300 hover:text-slate-100 min-h-11"
+        >
+          <ChevronDown className={`w-4 h-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+          <span>
+            <span className="text-rose-400 font-medium">{tasks.length} atrasadas</span>, desde el {formatReadableDate(tasks[0].date).toLowerCase()}
+          </span>
+        </button>
+        <button type="button" onClick={() => onMove(tasks.map((t) => t.id))} className={actionClass}>
+          Mover todas a hoy
+        </button>
+      </div>
+      {open && (
+        <ul id="atrasadas" className="pl-6 pb-1">
+          {tasks.map((t) => (
+            <li key={t.id} className={rowClass}>
+              <span className="text-sm text-slate-300 py-2 min-w-0 break-words">
+                <span className="text-slate-400">{formatReadableDate(t.date)}</span> · {t.title}
+              </span>
+              <button type="button" onClick={() => onMove([t.id])} aria-label={`Mover a hoy: ${t.title}`} className={actionClass}>
+                Mover a hoy
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </li>
   );
@@ -70,11 +119,14 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
   const isRealToday = todayKey === getTodayKey();
   const now = isRealToday ? nowMinutes : null;
 
-  const today = todayTasks(tasks, todayKey);
-  const doneToday = today.filter((t) => t.completed).length;
-  const overdue = tasks.filter((t) => isOverdue(t, todayKey));
-  const completedHabits = health.habits.filter((h) => h.done).length;
+  const [noticesOpen, setNoticesOpen] = useState(false);
+
+  // Solo lo de hoy; lo atrasado va aparte, en su propio aviso.
   const dialTasks = tasks.filter((t) => (t.date || todayKey) === todayKey);
+  const today = sortTasksChronologically(dialTasks, todayKey);
+  const doneToday = today.filter((t) => t.completed).length;
+  const overdue = tasks.filter((t) => isOverdue(t, todayKey)).sort((a, b) => a.date.localeCompare(b.date));
+  const completedHabits = health.habits.filter((h) => h.done).length;
 
   const currentMonth = monthOf(todayKey);
   const month = summarize(filterByMonth(transactions, currentMonth));
@@ -84,22 +136,15 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
     .filter((c) => c.status?.level === 'over');
   const recentTx = [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
   const { weekday, dayMonth } = formatLongDate(todayKey);
-  const head = headline(today, now, todayKey);
+  const head = headline(today, now);
 
   // Avisos en orden de urgencia: lo atrasado, luego el dinero, luego el registro del día.
+  // `topics` resume los avisos en una línea cuando van plegados en el celular.
   const notices = [];
-  const extraOverdue = overdue.length - 2;
-  overdue.slice(0, 2).forEach((t) => notices.push(
-    <Notice key={`o-${t.id}`} action="Pasar a hoy" onAction={() => onMoveToToday(t.id)}>
-      <span className="text-rose-400 font-medium">Pendiente</span> desde el {formatReadableDate(t.date).toLowerCase()}: {t.title}
-    </Notice>,
-  ));
-  if (extraOverdue > 0) {
-    notices.push(
-      <Notice key="o-more" action="Ver en la agenda" onAction={() => onNavigate('agenda')} tone="text-slate-400">
-        y {extraOverdue} {extraOverdue === 1 ? 'pendiente más' : 'pendientes más'} de días anteriores
-      </Notice>,
-    );
+  const topics = [];
+  if (overdue.length) {
+    notices.push(<OverdueNotice key="overdue" tasks={overdue} onMove={onMoveToToday} />);
+    topics.push(overdue.length === 1 ? '1 atrasada' : `${overdue.length} atrasadas`);
   }
   if (hasMoney) {
     overBudget.slice(0, 1).forEach(({ name: cat, status }) => notices.push(
@@ -107,6 +152,7 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
         {cat}: <span className="num">{signed(status.spent)}</span> de <span className="num">{signed(status.limit)}</span> este mes
       </Notice>,
     ));
+    if (overBudget.length) topics.push('presupuesto');
   }
   if (health.sleepHours == null || health.mood == null) {
     notices.push(
@@ -114,14 +160,20 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
         ¿Cómo dormiste y cómo va tu energía?
       </Notice>,
     );
+    topics.push('sueño y energía');
   }
+  // En celular, dos o más avisos se juntan en una fila que se abre; en pantallas grandes se ven todos.
+  const foldNotices = notices.length > 1;
 
   return (
     <div className="space-y-6">
       {/* El día como reloj: primero lo que sigue */}
       <section className={`${ui.card} p-6 md:p-8 grid gap-8 lg:grid-cols-[auto_minmax(0,1fr)] items-center`} aria-labelledby="hoy-sigue">
-        <DayDial tasks={dialTasks} nowMinutes={now} onToggleTask={onToggleTask} />
-        <div className="min-w-0">
+        {/* En celular y tablet, primero la respuesta (qué sigue) y después el reloj */}
+        <div className="order-2 lg:order-1">
+          <DayDial tasks={dialTasks} nowMinutes={now} onToggleTask={onToggleTask} />
+        </div>
+        <div className="min-w-0 order-1 lg:order-2">
           <h2 id="hoy-sigue" title={head.title} className="font-display text-[clamp(1.875rem,5vw,2.875rem)] font-bold text-slate-50 leading-[1.05] break-words text-balance line-clamp-3">
             {head.done && <PartyPopper className="inline w-[0.8em] h-[0.8em] mr-2 -mt-1 text-amber-400" aria-hidden="true" />}
             {head.title}
@@ -135,7 +187,23 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
             {greeting(Math.floor(nowMinutes / 60))}{name ? `, ${name}` : ''}. Hoy es {weekday} {dayMonth}.
           </p>
 
-          {notices.length > 0 && <ul className="mt-5 max-w-xl" aria-label="Avisos">{notices}</ul>}
+          {foldNotices && (
+            <button
+              type="button" aria-expanded={noticesOpen} aria-controls="avisos" onClick={() => setNoticesOpen((o) => !o)}
+              className="md:hidden mt-5 w-full flex items-center justify-between gap-3 text-left px-4 min-h-14 rounded-xl bg-slate-800/70 hover:bg-slate-800"
+            >
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-slate-100">{notices.length} cosas por atender</span>
+                <span className="block text-xs text-slate-400">{topics.join(' · ')}</span>
+              </span>
+              <ChevronDown className={`w-5 h-5 shrink-0 text-slate-400 transition-transform ${noticesOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+            </button>
+          )}
+          {notices.length > 0 && (
+            <ul id="avisos" aria-label="Avisos" className={`mt-5 max-w-xl ${foldNotices && !noticesOpen ? 'hidden md:block' : ''} ${foldNotices ? 'max-md:mt-2' : ''}`}>
+              {notices}
+            </ul>
+          )}
 
           <ul className="flex flex-wrap items-center gap-2 mt-6" aria-label="Avance de hoy">
             <li>
@@ -178,7 +246,6 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
           ) : (
             <ol className="space-y-1">
               {today.slice(0, 7).map((task) => {
-                const late = isOverdue(task, todayKey);
                 const range = formatTimeRange(task);
                 return (
                   <li key={task.id}>
@@ -186,14 +253,12 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
                       type="button" role="checkbox" aria-checked={task.completed} onClick={() => onToggleTask(task.id)}
                       className="w-full text-left grid grid-cols-[5.75rem_1.25rem_minmax(0,1fr)] items-center gap-3 px-2 py-3 rounded-xl hover:bg-slate-800/60"
                     >
-                      {late
-                        ? <span className="text-xs font-semibold text-rose-400">{formatReadableDate(task.date)}</span>
-                        : <span className="num text-xs text-slate-400">{range}</span>}
+                      <span className={`text-xs text-slate-400 ${isTime(task.time) ? 'num' : ''}`}>{range}</span>
                       {task.completed ? <CheckCircle2 className="w-5 h-5 text-emerald-400" aria-hidden="true" /> : <Circle className="w-5 h-5 text-slate-500" aria-hidden="true" />}
                       <span className={`text-sm min-w-0 break-words ${task.completed ? 'line-through text-slate-400' : 'text-slate-100'}`}>
                         {task.title}
                         {task.repeat !== 'none' && <Repeat className="inline w-3 h-3 ml-1.5 text-sky-400" aria-hidden="true" />}
-                        <span className="sr-only">{late ? ', atrasada' : ''}{task.repeat !== 'none' ? ', se repite' : ''}</span>
+                        {task.repeat !== 'none' && <span className="sr-only">, se repite</span>}
                       </span>
                     </button>
                   </li>

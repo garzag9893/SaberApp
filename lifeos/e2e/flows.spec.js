@@ -209,6 +209,28 @@ test('ajustes: borrar todo y deshacer', async ({ page }) => {
   await expect(page.getByText('Dentista', { exact: true })).toBeVisible();
 });
 
+test('resumen: lo atrasado va en un solo grupo y se mueve a hoy con deshacer', async ({ page }) => {
+  await openApp(page);
+  await page.evaluate(() => {
+    const d = JSON.parse(localStorage.getItem('lifeos_data_v6'));
+    d.tasks.push({ id: 'late-old', title: 'Renovar licencia', date: '2026-11-05', time: '', endTime: '', priority: 'low', repeat: 'none', completed: false, updatedAt: '2026-11-14T08:00:00.000Z' });
+    localStorage.setItem('lifeos_data_v6', JSON.stringify(d));
+  });
+  await page.reload();
+  const avisos = page.getByRole('list', { name: 'Avisos' });
+  await avisos.getByRole('button', { name: /2 atrasadas, desde el jue 5 de nov/ }).click();
+  // De la más antigua a la más reciente, y no se repiten en "Hoy, en orden".
+  await expect(avisos.getByRole('button', { name: /^Mover a hoy:/ })).toHaveText(['Mover a hoy', 'Mover a hoy']);
+  await expect(avisos.getByRole('button', { name: /^Mover a hoy:/ }).first()).toHaveAccessibleName('Mover a hoy: Renovar licencia');
+  await expect(page.getByRole('region', { name: 'Hoy, en orden' }).getByText('Pagar tarjeta de crédito')).toHaveCount(0);
+
+  await avisos.getByRole('button', { name: 'Mover todas a hoy' }).click();
+  await expect(page.getByRole('status')).toContainText('2 tareas movidas a hoy');
+  await expect(page.getByRole('region', { name: 'Hoy, en orden' }).getByText('Renovar licencia')).toBeVisible();
+  await page.getByRole('status').getByRole('button', { name: 'Deshacer' }).click();
+  await expect(avisos.getByRole('button', { name: /2 atrasadas/ })).toBeVisible();
+});
+
 test.describe('celular: navegación inferior', () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
@@ -234,5 +256,17 @@ test.describe('celular: navegación inferior', () => {
     const last = await page.locator('main > *').last().boundingBox();
     const barTop = (await bar.boundingBox()).y;
     expect(last.y + last.height).toBeLessThanOrEqual(barTop);
+  });
+
+  test('el resumen cabe: avisos juntos y el +1 de agua a la vista sin desplazarse', async ({ page }) => {
+    await openApp(page);
+    const toggle = page.getByRole('button', { name: /2 cosas por atender/ });
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('list', { name: 'Avisos' })).toBeHidden();
+    const water = await page.getByRole('button', { name: 'Sumar un vaso de agua' }).boundingBox();
+    const barTop = (await page.getByRole('navigation', { name: 'Secciones' }).filter({ visible: true }).boundingBox()).y;
+    expect(water.y + water.height).toBeLessThanOrEqual(barTop);
+    await toggle.click();
+    await expect(page.getByRole('list', { name: 'Avisos' }).getByText(/Ocio:/)).toBeVisible();
   });
 });

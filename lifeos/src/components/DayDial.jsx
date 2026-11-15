@@ -56,7 +56,8 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
     item.lane = item.start < outerEnd ? 1 : 0;
     if (item.lane === 0) outerEnd = item.end;
   }
-  const untimed = tasks.length - timed.length;
+  // Solo las que faltan: una tarea sin hora ya hecha no necesita aviso.
+  const untimed = tasks.filter((t) => !isTime(t.time) && !t.completed).length;
   const unchecked = timed.filter((i) => !i.task.completed).length;
 
   const next = nowMinutes == null
@@ -65,7 +66,6 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
   const selected = timed.find((i) => i.task.id === selectedId);
   // El título del Resumen ya dice qué sigue: el centro solo muestra una tarea cuando se señala o se toca.
   const shown = timed.find((i) => i.task.id === hoverId) || selected;
-  const clock = nowMinutes == null ? null : `${String(Math.floor(nowMinutes / 60)).padStart(2, '0')}:${String(nowMinutes % 60).padStart(2, '0')}`;
 
   let centerLabel = 'Siguiente';
   if (shown && shown !== next) centerLabel = shown.task.completed ? 'Hecha' : 'Tarea';
@@ -79,7 +79,7 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
   const select = (id) => setSelectedId((cur) => (cur === id ? null : id));
 
   return (
-    <div className="relative shrink-0 mx-auto aspect-square w-[min(80vw,300px)] lg:w-[272px]">
+    <div className="relative shrink-0 mx-auto aspect-square w-[min(74vw,272px)]">
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full h-full" role="group" aria-label={summary}>
         {/* Pista del día */}
         <circle cx={cx} cy={cx} r={outer} fill="none" className="stroke-slate-800" strokeWidth={stroke} />
@@ -96,7 +96,7 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
           {[0, 6, 12, 18].map((h) => {
             const [x, y] = polar(cx, h * 60, outer + stroke / 2 + 20);
             return (
-              <text key={h} x={x} y={y} textAnchor="middle" dominantBaseline="central" className="fill-slate-400 num" fontSize="12">
+              <text key={h} x={x} y={y} textAnchor="middle" dominantBaseline="central" className="fill-slate-400 num" fontSize="13">
                 {String(h).padStart(2, '0')}
               </text>
             );
@@ -187,12 +187,6 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
                 </button>
               )}
             </>
-          ) : clock ? (
-            <>
-              <p className="text-xs uppercase tracking-[0.14em] font-semibold text-amber-400">Ahora</p>
-              <p className="num text-3xl font-semibold text-slate-50 leading-none mt-1">{clock}</p>
-              {timed.length > 0 && <p className="text-xs text-slate-400 mt-2">Toca un arco para ver la tarea</p>}
-            </>
           ) : (
             <>
               <p className="text-xs uppercase tracking-[0.14em] font-semibold text-amber-400">
@@ -205,6 +199,7 @@ export default function DayDial({ tasks, nowMinutes, onToggleTask }) {
                     ? `${unchecked} ${unchecked === 1 ? 'tarea con hora por hacer' : 'tareas con hora por hacer'}`
                     : 'No quedan tareas con hora hoy'}
               </p>
+              {timed.length > 0 && <p className="text-xs text-slate-400 mt-1.5">Elige un arco para ver la tarea</p>}
             </>
           )}
           {untimed > 0 && <p className="text-xs text-slate-400 mt-1.5">+{untimed} sin hora</p>}
