@@ -86,7 +86,7 @@ test.describe('finanzas', () => {
   test('avisa del presupuesto excedido', async ({ page }) => {
     await openApp(page);
     await nav(page, 'Finanzas').click();
-    await expect(page.getByText(/Excedido por \$/)).toBeVisible();
+    await expect(page.getByText(/Te pasaste por \$/)).toBeVisible();
   });
 
   test('renombrar una categoría actualiza movimientos y presupuestos', async ({ page }) => {
@@ -229,6 +229,32 @@ test('resumen: lo atrasado va en un solo grupo y se mueve a hoy con deshacer', a
   await expect(page.getByRole('region', { name: 'Hoy, en orden' }).getByText('Renovar licencia')).toBeVisible();
   await page.getByRole('status').getByRole('button', { name: 'Deshacer' }).click();
   await expect(avisos.getByRole('button', { name: /2 atrasadas/ })).toBeVisible();
+});
+
+test('resumen: el dinero dice su estado y el mes en negativo explica qué pasó', async ({ page }) => {
+  await openApp(page);
+  await expect(page.getByRole('list', { name: 'Avisos' })).toContainText('Ocio: te pasaste por $269 · límite $1,500 al mes');
+
+  // Sin ingresos este mes: sugiere registrarlos en vez de mostrar "Te queda −$X".
+  await page.evaluate(() => {
+    const d = JSON.parse(localStorage.getItem('lifeos_data_v6'));
+    d.transactions = d.transactions.filter((t) => !(t.type === 'income' && t.date.startsWith('2026-11')));
+    localStorage.setItem('lifeos_data_v6', JSON.stringify(d));
+  });
+  await page.reload();
+  const dinero = page.getByRole('region', { name: /Dinero en/ });
+  await expect(dinero.getByText('Gastaste de más')).toBeVisible();
+  await expect(dinero.getByText('Te queda')).toHaveCount(0);
+  await expect(dinero).toContainText('Aún no registras ingresos este mes');
+
+  // Con ingresos menores a los gastos: dice cuánto y qué categoría pesa más.
+  await page.evaluate(() => {
+    const d = JSON.parse(localStorage.getItem('lifeos_data_v6'));
+    d.transactions.push({ id: 'n1', desc: 'Nómina', amount: 2000, type: 'income', category: 'Salario', date: '2026-11-01', recurringId: null, updatedAt: '2026-11-14T08:00:00.000Z' });
+    localStorage.setItem('lifeos_data_v6', JSON.stringify(d));
+  });
+  await page.reload();
+  await expect(dinero).toContainText('Salió $5,699 más de lo que entró. Lo que más pesa: Alimentación, con $3,950.');
 });
 
 test.describe('celular: navegación inferior', () => {

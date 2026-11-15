@@ -43,7 +43,7 @@ Basado en `DESIGN.md`.
 | 2.5 | ✅ Pruebas de regresión visual automáticas, flujos completos y contraste de colores | Playwright y Vitest en CI | S |
 | 2.6 | ✅ Resumen: crítica (23/40), auditoría (13/20), corrección de los 4 problemas importantes, pulido y navegación inferior en celular | impeccable | M |
 | 2.7 | ✅ Segunda crítica del Resumen: **23 → 25/40**. Corregido: lo atrasado en un solo grupo plegado con "Mover todas a hoy" y deshacer; en celular, avisos juntos en una fila que se abre, título antes del reloj y el +1 de agua a la vista | impeccable `critique` | S |
-| 2.7.1 | Dinero que se entienda: "Ocio: te pasaste por $269" y un mensaje claro cuando el mes está en negativo | impeccable `clarify` | S |
+| 2.7.1 | ✅ Dinero que se entienda: "Ocio: te pasaste por $269 · límite $1,500 al mes" (también en Finanzas) y, con el mes en negativo, "Gastaste de más" con la explicación y la categoría que más pesa, o la sugerencia de registrar los ingresos | impeccable `clarify` | S |
 | 2.7.2 | Volver arriba al cambiar de sección; teclado y lector de pantalla en el reloj (flechas, anuncio al seleccionar, Esc, botón de 44 px) | impeccable `harden` | S |
 | 2.7.3 | Idea aparte: que el reloj muestre gastos y vasos de agua, y probar un reloj de "horas despierto" o que gire con el ahora arriba | impeccable `shape` | M |
 | 2.8 | Bienvenida: crítica, auditoría, correcciones y pulido (empezar por quitar los textos pequeños encima de los títulos) | impeccable | M |
@@ -57,7 +57,7 @@ Basado en `DESIGN.md`.
 |---|---|---|
 | **90 pruebas de lógica** (Vitest) | Cada cambio | Errores en fechas, entrada rápida, finanzas, repetición, sincronización |
 | **Contraste de colores** (lee `index.css`) | Cada cambio | Que un cambio de color deje texto ilegible en tema claro u oscuro. Ya encontró 2 problemas reales en el tema claro |
-| **20 flujos en el navegador** | Cada cambio | Que se rompa agendar, borrar y deshacer, renombrar categorías, la migración de datos… |
+| **21 flujos en el navegador** | Cada cambio | Que se rompa agendar, borrar y deshacer, renombrar categorías, la migración de datos… |
 | **Accesibilidad básica** | Cada cambio | Botones o campos sin nombre para lectores de pantalla |
 | **27 capturas de regresión visual** (escritorio oscuro y claro, celular) | Cada cambio | Cambios visuales no intencionales. Si falla, el reporte trae imagen esperada, actual y diferencia |
 | **Publicación en GitHub Pages** | Cada cambio en `main` | Publicar una versión con pruebas fallando: solo publica si todo pasa |

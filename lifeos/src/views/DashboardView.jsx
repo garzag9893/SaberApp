@@ -19,7 +19,6 @@ const inTime = (mins) => {
   return m ? `en ${h} h ${m} min` : `en ${h} h`;
 };
 
-const signed = (n) => `${n < 0 ? '−' : ''}$${money(Math.abs(n))}`;
 
 // Lo que la persona necesita saber primero al abrir: qué está pasando o qué sigue.
 function headline(today, nowMinutes) {
@@ -133,7 +132,10 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
   const hasMoney = transactions.length > 0;
   const overBudget = settings.expenseCategories
     .map((c) => ({ name: c.name, status: budgetStatus(month.byCategory[c.name] || 0, budgets[c.name]) }))
-    .filter((c) => c.status?.level === 'over');
+    .filter((c) => c.status?.level === 'over')
+    .sort((a, b) => a.status.remaining - b.status.remaining); // el más excedido primero
+  // Si el mes va en negativo: lo que más pesa, para saber por dónde empezar.
+  const topExpense = Object.entries(month.byCategory).sort((a, b) => b[1] - a[1])[0];
   const recentTx = [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
   const { weekday, dayMonth } = formatLongDate(todayKey);
   const head = headline(today, now);
@@ -149,7 +151,9 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
   if (hasMoney) {
     overBudget.slice(0, 1).forEach(({ name: cat, status }) => notices.push(
       <Notice key={`b-${cat}`} action="Ver presupuesto" onAction={() => onNavigate('finances')}>
-        {cat}: <span className="num">{signed(status.spent)}</span> de <span className="num">{signed(status.limit)}</span> este mes
+        <span className="text-rose-400 font-medium">{cat}: te pasaste por <span className="num">${money(-status.remaining)}</span></span>
+        {' '}· límite <span className="num">${money(status.limit)}</span> al mes
+        {overBudget.length > 1 && ` · y ${overBudget.length - 1} ${overBudget.length === 2 ? 'presupuesto más' : 'presupuestos más'}`}
       </Notice>,
     ));
     if (overBudget.length) topics.push('presupuesto');
@@ -292,10 +296,18 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
                   <dd className="num text-sm text-slate-200">{month.expense ? '−' : ''}${money(month.expense)}</dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-4 pt-2 mt-1 border-t border-slate-800">
-                  <dt className="text-sm text-slate-100 font-medium">Te queda</dt>
-                  <dd className={`num text-xl font-semibold ${month.balance < 0 ? 'text-rose-400' : 'text-slate-50'}`}>{signed(month.balance)}</dd>
+                  {/* En negativo, la etiqueta dice lo que pasó; la cifra va sin signo para no leerse "te queda menos algo". */}
+                  <dt className="text-sm text-slate-100 font-medium">{month.balance < 0 ? 'Gastaste de más' : 'Te queda'}</dt>
+                  <dd className={`num text-xl font-semibold ${month.balance < 0 ? 'text-rose-400' : 'text-slate-50'}`}>${money(Math.abs(month.balance))}</dd>
                 </div>
               </dl>
+              {month.balance < 0 && (
+                <p className="text-sm text-slate-300 mt-2">
+                  {month.income === 0
+                    ? <>Aún no registras ingresos este mes. Si ya cobraste, escríbelo arriba, por ejemplo "Nómina $15,000".</>
+                    : <>Salió <span className="num">${money(-month.balance)}</span> más de lo que entró. Lo que más pesa: {topExpense[0]}, con <span className="num">${money(topExpense[1])}</span>.</>}
+                </p>
+              )}
               <ul className="border-t border-slate-800 mt-4 pt-2 flex-1" aria-label="Últimos movimientos">
                 {recentTx.map((tr) => (
                   <li key={tr.id} className="flex items-center justify-between gap-3 py-2">

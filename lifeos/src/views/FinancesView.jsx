@@ -346,7 +346,7 @@ export default function FinancesView({
                     <div className={`h-full rounded-full transition-all ${tone}`} style={{ width: `${Math.min(status.pct, 100)}%` }} />
                   </div>
                   <p className={`text-[11px] ${status.level === 'over' ? 'text-rose-300' : status.level === 'warn' ? 'text-amber-300' : 'text-slate-500'}`}>
-                    {status.level === 'over' ? `Excedido por $${money(-status.remaining)}` : `Quedan $${money(status.remaining)} (${Math.round(status.pct)}% usado)`}
+                    {status.level === 'over' ? `Te pasaste por $${money(-status.remaining)}` : `Quedan $${money(status.remaining)} (${Math.round(status.pct)}% usado)`}
                   </p>
                 </div>
               );

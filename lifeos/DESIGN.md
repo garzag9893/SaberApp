@@ -55,7 +55,7 @@ Las fuentes se instalan como paquetes (`@fontsource`) y se incluyen en la compil
 
 - **Una medida por gráfica.** Sueño (0–10 h) y energía (1–5) son dos gráficas, nunca dos escalas en el mismo eje.
 - **Toda gráfica responde al cursor.** El reloj, la dona y las gráficas de 7 días muestran el detalle al señalar. Las áreas que reaccionan son más grandes que la marca.
-- **El color nunca va solo.** Las categorías llevan nombre junto al punto de color, y los estados llevan texto ("Atrasada", "Excedido por…").
+- **El color nunca va solo.** Las categorías llevan nombre junto al punto de color, y los estados llevan texto ("Atrasada", "Te pasaste por…", "Gastaste de más").
 - **Foco visible** con teclado en todos los controles (contorno cempasúchil).
 - **Se respeta "reducir movimiento"** del sistema.
 - **El texto dice lo que pasa**: "Descargar respaldo", "Movimientos en Excel". Los estados vacíos invitan a actuar ("Agenda algo con hora para verlo aquí").
