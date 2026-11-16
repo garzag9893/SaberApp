@@ -59,6 +59,15 @@ export default function LifeOSApp() {
   useEffect(() => { savePrefs(prefs); }, [prefs]);
 
   useTheme(prefs.theme);
+  // Mueve tareas a otro día, con Deshacer (guarda las fechas originales).
+  const moveTasks = (ids, date, label) => {
+    const previous = ids.map((id) => [id, data.tasks.find((t) => t.id === id)?.date]);
+    ids.forEach((id) => store.updateTask(id, { date }));
+    showToast(ids.length === 1 ? `📅 Tarea movida a ${label}` : `📅 ${ids.length} tareas movidas a ${label}`, {
+      label: 'Deshacer',
+      onClick: () => previous.forEach(([id, d]) => store.updateTask(id, { date: d })),
+    });
+  };
   const install = useInstallPrompt(useCallback(() => showToast('📱 LifeOS se instaló en este dispositivo'), [showToast]));
   const cloud = useCloudSync({ data, dataRef: store.dataRef, applyRemote: store.applyRemote, showToast });
   useReminders({ tasks: data.tasks, enabled: prefs.reminders.enabled, minutesBefore: prefs.reminders.minutesBefore, showToast });
@@ -225,15 +234,8 @@ export default function LifeOSApp() {
             name={prefs.name}
             onNavigate={setActiveTab}
             onToggleTask={store.toggleTask}
-            onMoveToToday={(ids) => {
-              // Guarda las fechas originales para poder deshacer.
-              const previous = ids.map((id) => [id, data.tasks.find((t) => t.id === id)?.date]);
-              ids.forEach((id) => store.updateTask(id, { date: todayKey }));
-              showToast(ids.length === 1 ? '📅 Tarea movida a hoy' : `📅 ${ids.length} tareas movidas a hoy`, {
-                label: 'Deshacer',
-                onClick: () => previous.forEach(([id, date]) => store.updateTask(id, { date })),
-              });
-            }}
+            onMoveToToday={(ids) => moveTasks(ids, todayKey, 'hoy')}
+            onMoveToTomorrow={(ids) => moveTasks(ids, addDaysToKey(todayKey, 1), 'mañana')}
             onAddWater={() => {
               updateHealth((prev) => ({ ...prev, water: Math.min(prev.water + 1, MAX_WATER) }));
               showToast('💧 +1 vaso de agua');

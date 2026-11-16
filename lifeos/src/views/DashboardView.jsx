@@ -27,16 +27,27 @@ function headline(today, nowMinutes) {
     .filter((t) => isTime(t.time))
     .map((t) => {
       const start = timeToMinutes(t.time);
-      const end = isTime(t.endTime) && timeToMinutes(t.endTime) > start ? timeToMinutes(t.endTime) : start;
+      // Sin hora de fin, una tarea dura 25 min (igual que en el reloj).
+      const end = isTime(t.endTime) && timeToMinutes(t.endTime) > start ? timeToMinutes(t.endTime) : Math.min(start + 25, 1440);
       return { t, start, end };
     })
     .sort((a, b) => a.start - b.start);
 
   if (nowMinutes != null) {
     const current = timed.find((i) => i.start <= nowMinutes && nowMinutes < i.end);
-    if (current) return { title: current.t.title, time: 'Ahora', detail: `termina a las ${current.t.endTime}` };
+    if (current) {
+      return { title: current.t.title, now: true, detail: current.t.endTime ? `termina a las ${current.t.endTime}` : `empezó a las ${current.t.time}` };
+    }
     const next = timed.find((i) => i.start > nowMinutes);
     if (next) return { title: next.t.title, time: formatTimeRange(next.t), detail: inTime(next.start - nowMinutes) };
+    // Ya no queda nada con hora por delante: lo que se pasó se dice primero, con salida.
+    const missed = timed.filter((i) => i.end <= nowMinutes);
+    if (missed.length === 1) {
+      return { title: missed[0].t.title, late: true, time: missed[0].t.time, detail: 'se pasó la hora. Márcala o muévela a mañana.', missed: [missed[0].t] };
+    }
+    if (missed.length > 1) {
+      return { title: `Se pasó la hora de ${missed.length} tareas`, late: true, detail: 'Márcalas en la lista o muévelas a mañana.', missed: missed.map((i) => i.t) };
+    }
   } else if (timed.length) {
     return { title: timed[0].t.title, time: formatTimeRange(timed[0].t) };
   }
@@ -111,7 +122,7 @@ function OverdueNotice({ tasks, onMove }) {
   );
 }
 
-export default function DashboardView({ data, todayKey, name = '', onNavigate, onToggleTask, onMoveToToday, onAddWater }) {
+export default function DashboardView({ data, todayKey, name = '', onNavigate, onToggleTask, onMoveToToday, onMoveToTomorrow, onAddWater }) {
   const { tasks, transactions, health, budgets, settings } = data;
   const nowMinutes = useNowMinutes();
   // El "ahora" solo tiene sentido si el día mostrado es el real (no una simulación).
@@ -144,6 +155,19 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
   // `topics` resume los avisos en una línea cuando van plegados en el celular.
   const notices = [];
   const topics = [];
+  if (head.missed) {
+    const ids = head.missed.map((t) => t.id);
+    notices.push(
+      <Notice
+        key="missed" action="Mover a mañana" onAction={() => onMoveToTomorrow(ids)}
+        actionLabel={ids.length === 1 ? `Mover a mañana: ${head.missed[0].title}` : `Mover a mañana las ${ids.length} tareas`}
+      >
+        <span className="text-rose-400 font-medium">{ids.length === 1 ? 'Se pasó la hora' : `${ids.length} se pasaron`}</span>
+        {ids.length === 1 ? ` de ${head.missed[0].title}` : ` de su hora: ${head.missed.map((t) => t.title).join(', ')}`}
+      </Notice>,
+    );
+    topics.push(ids.length === 1 ? '1 se pasó' : `${ids.length} se pasaron`);
+  }
   if (overdue.length) {
     notices.push(<OverdueNotice key="overdue" tasks={overdue} onMove={onMoveToToday} />);
     topics.push(overdue.length === 1 ? '1 atrasada' : `${overdue.length} atrasadas`);
@@ -173,18 +197,17 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
     <div className="space-y-6">
       {/* El día como reloj: primero lo que sigue */}
       <section className={`${ui.card} p-6 md:p-8 grid gap-8 lg:grid-cols-[auto_minmax(0,1fr)] items-center`} aria-labelledby="hoy-sigue">
-        {/* En celular y tablet, primero la respuesta (qué sigue) y después el reloj */}
-        <div className="order-2 lg:order-1">
-          <DayDial tasks={dialTasks} nowMinutes={now} onToggleTask={onToggleTask} />
-        </div>
-        <div className="min-w-0 order-1 lg:order-2">
+        {/* Primero la respuesta (qué sigue) y después el reloj, también en el orden de lectura;
+            en pantallas grandes el reloj se ve a la izquierda */}
+        <div className="min-w-0 lg:col-start-2 lg:row-start-1">
           <h2 id="hoy-sigue" title={head.title} className="font-display text-[clamp(1.875rem,5vw,2.875rem)] font-bold text-slate-50 leading-[1.05] break-words text-balance line-clamp-3">
             {head.done && <PartyPopper className="inline w-[0.8em] h-[0.8em] mr-2 -mt-1 text-amber-400" aria-hidden="true" />}
             {head.title}
           </h2>
-          <p className="text-base text-indigo-300 mt-2">
+          <p className={`text-base mt-2 ${head.late ? 'text-rose-300' : 'text-indigo-300'}`}>
+            {head.now && <span className="font-medium">Ahora</span>}
             {head.time && <span className="num font-medium">{head.time}</span>}
-            {head.time && head.detail && ' · '}
+            {(head.now || head.time) && head.detail && ' · '}
             {head.detail}
           </p>
           <p className="text-slate-300 mt-4 max-w-prose">
@@ -223,13 +246,16 @@ export default function DashboardView({ data, todayKey, name = '', onNavigate, o
             <li className="flex items-center rounded-full bg-slate-800">
               <span className="text-sm pl-4 pr-2 text-slate-200">{health.water} de {health.waterGoal} vasos</span>
               <button
-                type="button" onClick={onAddWater} aria-label="Sumar un vaso de agua"
+                type="button" onClick={onAddWater} aria-label="Sumar 1 vaso de agua"
                 className="flex items-center gap-1 text-sm font-medium text-sky-300 hover:text-sky-200 pl-3 pr-4 min-h-11 border-l border-slate-700 rounded-r-full"
               >
                 <Plus className="w-3.5 h-3.5" aria-hidden="true" /> 1
               </button>
             </li>
           </ul>
+        </div>
+        <div className="lg:col-start-1 lg:row-start-1">
+          <DayDial tasks={dialTasks} nowMinutes={now} onToggleTask={onToggleTask} />
         </div>
       </section>
 

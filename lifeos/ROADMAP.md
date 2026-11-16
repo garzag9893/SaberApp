@@ -45,6 +45,7 @@ Basado en `DESIGN.md`.
 | 2.7 | ✅ Segunda crítica del Resumen: **23 → 25/40**. Corregido: lo atrasado en un solo grupo plegado con "Mover todas a hoy" y deshacer; en celular, avisos juntos en una fila que se abre, título antes del reloj y el +1 de agua a la vista | impeccable `critique` | S |
 | 2.7.1 | ✅ Dinero que se entienda: "Ocio: te pasaste por $269 · límite $1,500 al mes" (también en Finanzas) y, con el mes en negativo, "Gastaste de más" con la explicación y la categoría que más pesa, o la sugerencia de registrar los ingresos | impeccable `clarify` | S |
 | 2.7.2 | ✅ Cada sección abre desde arriba con el foco en el contenido; reloj con una sola parada de Tab, flechas, Enter al botón, Esc, anuncio al seleccionar y botón de 44 px; avisos emergentes que sí se anuncian | impeccable `harden` | S |
+| 2.7.4 | ✅ Tercera crítica del Resumen: **25 → 27/40**. Corregido en el reloj: tocar cerca elige la tarea más cercana, las tareas encimadas se recorren tocando varias veces, estado de noche "Se pasó la hora" con "Mover a mañana" y deshacer, arcos punteados y delgados además de color, contraste en tema claro, orden de lectura en celular y "Cómo leer el reloj" | impeccable `critique`, `harden` | M |
 | 2.7.3 | Idea aparte: que el reloj muestre gastos y vasos de agua, y probar un reloj de "horas despierto" o que gire con el ahora arriba | impeccable `shape` | M |
 | 2.8 | Bienvenida: crítica, auditoría, correcciones y pulido (empezar por quitar los textos pequeños encima de los títulos) | impeccable | M |
 | 2.9 | Mismo flujo para Agenda, Finanzas, Salud y Ajustes, una pantalla a la vez | impeccable | L |
@@ -57,7 +58,7 @@ Basado en `DESIGN.md`.
 |---|---|---|
 | **90 pruebas de lógica** (Vitest) | Cada cambio | Errores en fechas, entrada rápida, finanzas, repetición, sincronización |
 | **Contraste de colores** (lee `index.css`) | Cada cambio | Que un cambio de color deje texto ilegible en tema claro u oscuro. Ya encontró 2 problemas reales en el tema claro |
-| **23 flujos en el navegador** | Cada cambio | Que se rompa agendar, borrar y deshacer, renombrar categorías, la migración de datos… |
+| **26 flujos en el navegador** | Cada cambio | Que se rompa agendar, borrar y deshacer, renombrar categorías, la migración de datos… |
 | **Accesibilidad básica** | Cada cambio | Botones o campos sin nombre para lectores de pantalla |
 | **27 capturas de regresión visual** (escritorio oscuro y claro, celular) | Cada cambio | Cambios visuales no intencionales. Si falla, el reporte trae imagen esperada, actual y diferencia |
 | **Publicación en GitHub Pages** | Cada cambio en `main` | Publicar una versión con pruebas fallando: solo publica si todo pasa |

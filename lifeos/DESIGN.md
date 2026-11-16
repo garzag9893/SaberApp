@@ -54,6 +54,7 @@ Las fuentes se instalan como paquetes (`@fontsource`) y se incluyen en la compil
 ### Reglas
 
 - **Una medida por gráfica.** Sueño (0–10 h) y energía (1–5) son dos gráficas, nunca dos escalas en el mismo eje.
+- **El reloj se lee por forma, no solo por color.** Arco grueso = por hacer; delgado y verde = hecha; punteado = se pasó su hora sin marcar. Cada arco mide al menos 15 unidades para tocarlo, y un toque cerca del anillo elige la tarea más cercana. Si varias tareas se enciman, cada toque pasa a la siguiente ("2 de 3 a esta hora"). Debajo, "Cómo leer el reloj" lo explica.
 - **Toda gráfica responde al cursor.** El reloj, la dona y las gráficas de 7 días muestran el detalle al señalar. Las áreas que reaccionan son más grandes que la marca.
 - **El color nunca va solo.** Las categorías llevan nombre junto al punto de color, y los estados llevan texto ("Atrasada", "Te pasaste por…", "Gastaste de más").
 - **Foco visible** con teclado en todos los controles (contorno cempasúchil).

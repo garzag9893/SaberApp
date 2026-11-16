@@ -271,13 +271,71 @@ test('reloj con teclado: una parada de Tab, flechas, Enter lleva al botón y Esc
   await expect(page.locator(':focus')).toHaveAttribute('aria-label', /^Dentista/);
   await page.keyboard.press('Enter');
   await expect(page.locator(':focus')).toHaveAccessibleName('Marcar como hecha: Dentista');
-  await expect(page.getByText('Seleccionaste Dentista, 13:15.')).toBeAttached();
+  await expect(page.getByText(/^Seleccionaste Dentista, 13:15/)).toBeAttached();
   const box = await page.locator(':focus').boundingBox();
   expect(box.height).toBeGreaterThanOrEqual(44);
 
   await page.keyboard.press('Escape');
   await expect(page.locator(':focus')).toHaveAttribute('aria-label', /^Dentista/);
   await expect(page.getByRole('button', { name: /Marcar como hecha/ })).toHaveCount(0);
+});
+
+test.describe('reloj: tareas encimadas y la noche', () => {
+  const addTask = (page, task) => page.evaluate((t) => {
+    const d = JSON.parse(localStorage.getItem('lifeos_data_v6'));
+    d.tasks.push({ date: '2026-11-14', endTime: '', priority: 'low', repeat: 'none', completed: false, updatedAt: '2026-11-14T08:00:00.000Z', ...t });
+    localStorage.setItem('lifeos_data_v6', JSON.stringify(d));
+  }, task);
+  const pressed = (page) => page.locator('svg[role="group"] path[aria-pressed="true"]');
+
+  test('tocar varias veces el mismo punto recorre las tareas encimadas y luego suelta', async ({ page }) => {
+    await openApp(page);
+    await addTask(page, { id: 'c1', title: 'Llamar a mamá', time: '13:00' });
+    await addTask(page, { id: 'c2', title: 'Pagar luz', time: '13:10' });
+    await page.reload();
+    const dentista = page.getByRole('button', { name: /^Dentista, 13:15/ });
+    const seen = [];
+    for (let i = 0; i < 4; i += 1) {
+      await dentista.click({ force: true }); // el mismo punto, aunque otro arco quede encima
+      seen.push((await pressed(page).getAttribute('aria-label')).split(',')[0]);
+    }
+    expect(seen).toEqual(['Dentista', 'Entrenamiento de fuerza', 'Llamar a mamá', 'Pagar luz']);
+    await expect(page.getByText('3 de 4 a esta hora')).toBeVisible();
+    await dentista.click({ force: true });
+    await expect(pressed(page)).toHaveCount(0);
+
+    // Tocar fuera del reloj también suelta la selección.
+    await dentista.click({ force: true });
+    await expect(pressed(page)).toHaveCount(1);
+    await page.getByRole('heading', { name: 'Hoy, en orden' }).click();
+    await expect(pressed(page)).toHaveCount(0);
+  });
+
+  test('de noche dice qué se pasó, lo marca punteado y lo mueve a mañana con deshacer', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-11-14T21:40:00-06:00'));
+    await openApp(page);
+    await expect(page.getByRole('heading', { name: 'Se pasó la hora de 3 tareas' })).toBeVisible();
+    await expect(page.locator('svg[role="group"]')).toHaveAttribute('aria-label', /se pasó la hora de 3 tareas sin marcar/);
+    await expect(page.getByRole('button', { name: /^Dentista, 13:15, ya pasó la hora/ })).toHaveCount(1);
+    await expect(page.locator('svg[role="group"] path[stroke-dasharray]')).toHaveCount(3);
+
+    await page.getByRole('button', { name: 'Mover a mañana las 3 tareas' }).click();
+    await expect(page.getByRole('status')).toContainText('3 tareas movidas a mañana');
+    await expect(page.getByRole('heading', { name: 'Comprar regalo de cumpleaños' })).toBeVisible();
+    await page.getByRole('status').getByRole('button', { name: 'Deshacer' }).click();
+    await expect(page.getByRole('heading', { name: 'Se pasó la hora de 3 tareas' })).toBeVisible();
+  });
+
+  test('en celular el título va antes que el reloj también al leer y con Tab', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openApp(page);
+    const order = await page.evaluate(() => {
+      const h = document.getElementById('hoy-sigue');
+      const dial = document.querySelector('svg[role="group"]');
+      return Boolean(h.compareDocumentPosition(dial) & Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+    expect(order).toBe(true);
+  });
 });
 
 test('cambiar de sección abre desde arriba y lleva el foco al contenido', async ({ page }) => {
@@ -321,7 +379,7 @@ test.describe('celular: navegación inferior', () => {
     const toggle = page.getByRole('button', { name: /2 cosas por atender/ });
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await expect(page.getByRole('list', { name: 'Avisos' })).toBeHidden();
-    const water = await page.getByRole('button', { name: 'Sumar un vaso de agua' }).boundingBox();
+    const water = await page.getByRole('button', { name: 'Sumar 1 vaso de agua' }).boundingBox();
     const barTop = (await page.getByRole('navigation', { name: 'Secciones' }).filter({ visible: true }).boundingBox()).y;
     expect(water.y + water.height).toBeLessThanOrEqual(barTop);
     await toggle.click();

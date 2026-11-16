@@ -170,6 +170,13 @@
     text-wrap: pretty;
   }
 
+  /* En celular, la barra inferior fija no debe tapar lo que se enfoca o se desplaza a la vista. */
+  @media (max-width: 767px) {
+    html {
+      scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+    }
+  }
+
   /* Foco visible con teclado en todos los controles. */
   :where(button, a, input, select, textarea, [tabindex]):focus-visible {
     outline: 2px solid var(--color-amber-400);
